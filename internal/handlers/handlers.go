@@ -8,9 +8,6 @@ import (
 	"strconv"
 )
 
-// TODO
-// Во всех хендлерах необходимо использовать не конкретный Storage, а интерфейс.
-// В дальнейшем мы будем реализовывать Storage, который ходит в базу данных
 func Webhook(metrics storage.Metrics) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
@@ -55,28 +52,19 @@ func ValueMetrics(metrics storage.Metrics) echo.HandlerFunc {
 	}
 }
 
-//func AllMetrics(s *storage.MemStorage) echo.HandlerFunc {
-//	return func(c echo.Context) error {
-//		//metricsName := c.Param("nameM")
-//		//metricsValue := c.Param("valueM")
-//		//for name, value := range s.GetAll() {
-//		//		result += fmt.Sprintf("- %s = %d\n", name, value)
-//		//	}
-//		s.GetAll()
-//		//err := c.String(http.StatusOK)
-//		//if err != nil {
-//		//	return err
-//		//}
-//
-//		//	return nil
-//		//}
-//		return nil
-//	}
-//}
-
-func AllMetrics(s *storage.MemStorage) echo.HandlerFunc {
+func AllMetrics(metrics storage.Metrics) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		err := ctx.String(http.StatusOK, s.AllMetrics())
+		m := metrics.AllMetrics()
+		result := "Gauge metrics:\n"
+		for name, value := range m.Gauge {
+			result += fmt.Sprintf("- %s = %f\n", name, value)
+		}
+
+		result += "Counter metrics:\n"
+		for name, value := range m.Counter {
+			result += fmt.Sprintf("- %s = %d\n", name, value)
+		}
+		err := ctx.String(http.StatusOK, result)
 		if err != nil {
 			return err
 		}

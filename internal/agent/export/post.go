@@ -25,10 +25,11 @@ func post(address string, t string, name string, value string) {
 	bodyReader := bytes.NewReader([]byte{})
 
 	// We can set the content type here
-	fmt.Println("Running server on", address)
+	fmt.Println("Running agent on", address)
 	resp, err := http.Post(fmt.Sprintf("http://%s/update/%s/%s/%s", address, t, name, value), "text/plain", bodyReader)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
 	}
 	defer resp.Body.Close()
 
