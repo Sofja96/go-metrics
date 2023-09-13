@@ -204,6 +204,10 @@ func TestGetMetric(t *testing.T) {
 	}
 	bodyReader := bytes.NewReader([]byte{})
 	resp, err := http.Post(fmt.Sprintf("%s/update/counter/PollCount1/10", httpTestServer.URL), "text/plain", bodyReader)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	resp1, err := http.Post(fmt.Sprintf("%s/update/gauge/Alloc1/10", httpTestServer.URL), "text/plain", bodyReader)
 	if err != nil {
 		fmt.Println(err)
@@ -223,7 +227,6 @@ func TestGetMetric(t *testing.T) {
 			tr := &http.Transport{}
 			client := &http.Client{Transport: tr}
 			res, err := client.Get(tc.path)
-			defer res.Body.Close()
 			require.NoError(t, err)
 			assert.Equal(tc.expected.code, res.StatusCode)
 			if tc.expected.code == http.StatusOK {
@@ -231,6 +234,7 @@ func TestGetMetric(t *testing.T) {
 				assert.NotEmpty(string(respBody))
 				assert.Equal(tc.expected.body, string(respBody))
 				require.NoError(t, err)
+				defer res.Body.Close()
 			}
 		})
 	}

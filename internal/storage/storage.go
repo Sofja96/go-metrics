@@ -54,7 +54,7 @@ type AllMetrics struct {
 
 func (s *MemStorage) AllMetrics() *AllMetrics {
 	return &AllMetrics{
-		Gauge:   *(&s.gaugeData),
-		Counter: *(&s.counterData),
+		Gauge:   s.gaugeData,
+		Counter: s.counterData,
 	}
 }
