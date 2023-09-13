@@ -1,12 +1,16 @@
 package handlers
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
+	"time"
+
+	"github.com/Sofja96/go-metrics.git/internal/storage"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAllMetrics(t *testing.T) {
@@ -39,8 +43,18 @@ func TestAllMetrics(t *testing.T) {
 	}
 	for _, tc := range tt {
 		e := echo.New()
+		s := storage.NewMemStorage()
+		e.GET("/", AllMetrics(s))
+		e.GET("/value/:typeM/:nameM", ValueMetrics(s))
+		e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
 		assert := assert.New(t)
-		e.Start("8080")
+		go func() {
+			err := e.Start(":8080")
+			if err != nil {
+				fmt.Print(err)
+			}
+		}()
+		time.Sleep(2 * time.Second)
 		t.Run(tc.name, func(t *testing.T) {
 			//s := storage.New()
 			//AllMetrics(s)
