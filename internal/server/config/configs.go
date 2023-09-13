@@ -1,7 +1,6 @@
 package config
 
 type Config struct {
-	//address string
 	Address string `env:"ADDRESS"`
 }
 

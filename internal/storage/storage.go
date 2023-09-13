@@ -38,7 +38,6 @@ func (s *MemStorage) UpdateGauge(name string, value float64) {
 
 func (s *MemStorage) GetValue(t string, name string) string {
 	var v string
-	//	statusCode := http.StatusOK
 	if val, ok := s.gaugeData[name]; ok && t == "gauge" {
 		v = fmt.Sprint(val)
 	} else if val, ok := s.counterData[name]; ok && t == "counter" {
