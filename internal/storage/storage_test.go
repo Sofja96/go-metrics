@@ -44,7 +44,7 @@ func TestUpdateGauge(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			s.UpdateGauge(test.metricsName, test.value)
-			assert.Equal(t, gauge(test.result), s.gaugeData[test.metricsName])
+			assert.Equal(t, Gauge(test.result), s.gaugeData[test.metricsName])
 		})
 	}
 }
