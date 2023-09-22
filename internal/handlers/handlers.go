@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func Webhook(metrics storage.Metrics) echo.HandlerFunc {
+func Webhook(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
 		metricsName := c.Param("nameM")
@@ -16,13 +16,13 @@ func Webhook(metrics storage.Metrics) echo.HandlerFunc {
 
 		if metricsType == "counter" {
 			if value, err := strconv.ParseInt(metricsValue, 10, 64); err == nil {
-				metrics.UpdateCounter(metricsName, value)
+				storage.UpdateCounter(metricsName, value)
 			} else {
 				return c.String(http.StatusBadRequest, fmt.Sprintf("%s incorrect values(int) of metric", metricsValue))
 			}
 		} else if metricsType == "gauge" {
 			if value, err := strconv.ParseFloat(metricsValue, 64); err == nil {
-				metrics.UpdateGauge(metricsName, value)
+				storage.UpdateGauge(metricsName, value)
 			} else {
 				return c.String(http.StatusBadRequest, fmt.Sprintf("%s incorrect values(float) of metric", metricsValue))
 			}
@@ -36,14 +36,14 @@ func Webhook(metrics storage.Metrics) echo.HandlerFunc {
 
 }
 
-func ValueMetrics(metrics storage.Metrics) echo.HandlerFunc {
+func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
 		metricsName := c.Param("nameM")
-		if len(metrics.GetValue(metricsType, metricsName)) == 0 {
+		if len(storage.GetValue(metricsType, metricsName)) == 0 {
 			return c.String(http.StatusNotFound, "")
 		}
-		err := c.String(http.StatusOK, metrics.GetValue(metricsType, metricsName))
+		err := c.String(http.StatusOK, storage.GetValue(metricsType, metricsName))
 		if err != nil {
 			return err
 		}
@@ -52,16 +52,16 @@ func ValueMetrics(metrics storage.Metrics) echo.HandlerFunc {
 	}
 }
 
-func AllMetrics(metrics storage.Metrics) echo.HandlerFunc {
+func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		m := metrics.AllMetrics()
+		m := storage.AllMetrics()
 		result := "Gauge metrics:\n"
-		for name, value := range m.Gauge {
+		for name, value := range *m.Gauge {
 			result += fmt.Sprintf("- %s = %f\n", name, value)
 		}
 
 		result += "Counter metrics:\n"
-		for name, value := range m.Counter {
+		for name, value := range *m.Counter {
 			result += fmt.Sprintf("- %s = %d\n", name, value)
 		}
 		err := ctx.String(http.StatusOK, result)

@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-type gauge float64
+type Gauge float64
 type Counter int64
 
-type Metrics interface {
+type Storage interface {
 	UpdateCounter(name string, value int64)
 	UpdateGauge(name string, value float64)
 	GetValue(t string, name string) string
@@ -15,7 +15,7 @@ type Metrics interface {
 }
 
 type MemStorage struct {
-	gaugeData   map[string]gauge
+	gaugeData   map[string]Gauge
 	counterData map[string]Counter
 }
 
@@ -23,7 +23,7 @@ type MemStorage struct {
 func NewMemStorage() *MemStorage {
 
 	return &MemStorage{
-		gaugeData:   make(map[string]gauge),
+		gaugeData:   make(map[string]Gauge),
 		counterData: make(map[string]Counter),
 	}
 }
@@ -33,7 +33,7 @@ func (s *MemStorage) UpdateCounter(name string, value int64) {
 }
 
 func (s *MemStorage) UpdateGauge(name string, value float64) {
-	s.gaugeData[name] = gauge(value)
+	s.gaugeData[name] = Gauge(value)
 }
 
 func (s *MemStorage) GetValue(t string, name string) string {
@@ -47,13 +47,46 @@ func (s *MemStorage) GetValue(t string, name string) string {
 }
 
 type AllMetrics struct {
-	Gauge   map[string]gauge
-	Counter map[string]Counter
+	Gauge   *map[string]Gauge
+	Counter *map[string]Counter
 }
 
 func (s *MemStorage) AllMetrics() *AllMetrics {
 	return &AllMetrics{
-		Gauge:   s.gaugeData,
-		Counter: s.counterData,
+		Gauge:   &s.gaugeData,
+		Counter: &s.counterData,
 	}
 }
+
+//TODO
+
+// Мапы всегда передаются по ссылке, то есть за пределами MemStorage, например, в хендлерах,
+// мы сможем как-то изменять их. Для сдачи работы не критично,
+// но я бы еще добавил копирование мап и возвращал новые, или возвращал бы собственные структуры
+//type GaugeMetric struct {
+//	Name  string
+//	Value float64
+//}
+//type CounterMetric struct {
+//	Name  string
+//	Value int64
+//}
+//type AllMetrics struct {
+//	Gauges   map[string]GaugeMetric
+//	Counters map[string]CounterMetric
+//}
+
+//func (s *MemStorage) AllMetrics(name string, value float64) *AllMetrics {
+//	return &AllMetrics{
+//		// s.gaugeData: &Gauges
+//		Gauges:   make(map[string]GaugeMetric),
+//		 Gauges.Name = s.gaugeData[name]
+//
+//
+//
+//
+//		//Counters: make(map[string]CounterMetric),
+//		//	Gauges: s.gaugeData,
+//		//Counters: &[]CounterMetric,
+//	}
+//}

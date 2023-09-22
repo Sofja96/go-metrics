@@ -13,9 +13,11 @@ func main() {
 	config.ParseFlags(c)
 	s := storage.NewMemStorage()
 	e := handlers.CreateServer(s)
+	//e.Use(middleware.WithLogging(sugar))
 	fmt.Println("Running server on", c.Address)
 	err := e.Start(c.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 }
