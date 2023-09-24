@@ -76,7 +76,7 @@ func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func ValueJson(s storage.Storage) echo.HandlerFunc {
+func GetValueJson(s storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var metric models.Metrics
 		err := json.NewDecoder(c.Request().Body).Decode(&metric)
