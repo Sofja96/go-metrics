@@ -18,6 +18,8 @@ func CreateServer(s *storage.MemStorage) *echo.Echo {
 	sugar = *logger.Sugar()
 	e := echo.New()
 	e.Use(middleware.WithLogging(sugar))
+	e.POST("/update/", UpdateJSON(s))
+	e.POST("/value/", ValueJson(s))
 	e.GET("/", AllMetrics(s))
 	e.GET("/value/:typeM/:nameM", ValueMetrics(s))
 	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))

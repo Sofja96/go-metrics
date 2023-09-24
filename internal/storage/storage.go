@@ -12,6 +12,8 @@ type Storage interface {
 	UpdateGauge(name string, value float64)
 	GetValue(t string, name string) string
 	AllMetrics() *AllMetrics
+	GetCounterValue(id string) int64
+	GetGaugeValue(id string) float64
 }
 
 type MemStorage struct {
@@ -44,6 +46,14 @@ func (s *MemStorage) GetValue(t string, name string) string {
 		v = fmt.Sprint(val)
 	}
 	return v
+}
+
+func (s *MemStorage) GetCounterValue(id string) int64 {
+	return int64(s.counterData[id])
+}
+
+func (s *MemStorage) GetGaugeValue(id string) float64 {
+	return float64(s.gaugeData[id])
 }
 
 type AllMetrics struct {

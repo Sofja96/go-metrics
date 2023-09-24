@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -36,6 +38,28 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 
 }
 
+func UpdateJSON(s storage.Storage) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var metric models.Metrics
+		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+		if err != nil {
+			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+		}
+
+		switch metric.MType {
+		case "counter":
+			s.UpdateCounter(metric.ID, *metric.Delta)
+		case "gauge":
+			s.UpdateGauge(metric.ID, *metric.Value)
+		default:
+			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+		}
+
+		c.Response().Header().Set("Content-Type", "application/json")
+		return c.JSON(http.StatusOK, metric)
+	}
+}
+
 func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
@@ -49,6 +73,28 @@ func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 		}
 
 		return nil
+	}
+}
+
+func ValueJson(s storage.Storage) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var metric models.Metrics
+		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+		if err != nil {
+			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+		}
+		switch metric.MType {
+		case "counter":
+			value := s.GetCounterValue(metric.ID)
+			metric.Delta = &value
+		case "gauge":
+			value := s.GetGaugeValue(metric.ID)
+			metric.Value = &value
+		default:
+			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+		}
+		c.Response().Header().Set("Content-Type", "application/json")
+		return c.JSON(http.StatusOK, metric)
 	}
 }
 
