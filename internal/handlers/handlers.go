@@ -39,11 +39,11 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 }
 
 func UpdateJSON(s storage.Storage) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(ctx echo.Context) error {
 		var metric models.Metrics
-		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+		err := json.NewDecoder(ctx.Request().Body).Decode(&metric)
 		if err != nil {
-			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
 
 		switch metric.MType {
@@ -52,13 +52,33 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		case "gauge":
 			s.UpdateGauge(metric.ID, *metric.Value)
 		default:
-			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+			return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
 		}
 
-		c.Response().Header().Set("Content-Type", "application/json")
-		return c.JSON(http.StatusOK, metric)
+		ctx.Response().Header().Set("Content-Type", "application/json")
+		return ctx.JSON(http.StatusOK, metric)
 	}
 }
+
+//func UpdateJson(storage storage.Storage) echo.HandlerFunc {
+//	return func(c echo.Context) error {
+//		var metric models.Metrics
+//		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+//		if err != nil {
+//			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+//		}
+//		if metric.MType == "counter" {
+//			storage.UpdateCounter(metric.ID, *metric.Delta)
+//		}
+//		if metric.MType == "gauge" {
+//			storage.UpdateGauge(metric.ID, *metric.Value)
+//		} else {
+//			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+//		}
+//		c.Response().Header().Set("Content-Type", "application/json")
+//		return c.JSON(http.StatusOK, metric)
+//	}
+//}
 
 func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -76,7 +96,7 @@ func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func GetValueJson(s storage.Storage) echo.HandlerFunc {
+func ValueJSON(s storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var metric models.Metrics
 		err := json.NewDecoder(c.Request().Body).Decode(&metric)
@@ -97,6 +117,64 @@ func GetValueJson(s storage.Storage) echo.HandlerFunc {
 		return c.JSON(http.StatusOK, metric)
 	}
 }
+
+//func ValueJSON(storage storage.Storage) echo.HandlerFunc {
+//	return func(c echo.Context) error {
+//		var metric models.Metrics
+//		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+//		if err != nil {
+//			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+//		}
+//		metricsType := metric.MType
+//		metricsName := metric.ID
+//		if len(storage.GetValue(metricsType, metricsName)) == 0 {
+//			return c.String(http.StatusNotFound, "")
+//		} else {
+//			storage.GetValue(metricsType, metricsName)
+//		}
+//		//err = c.String(http.StatusOK, metric.MType,metric.ID)
+//		//if err != nil {
+//		//	return err
+//		//}
+//
+//		//if metric.MType == "counter" {
+//		//	storage.UpdateCounter(metric.ID, *metric.Delta)
+//		//}
+//		//if metric.MType == "gauge" {
+//		//	storage.UpdateGauge(metric.ID, *metric.Value)
+//		//} else {
+//		//	return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+//		//}
+//		c.Response().Header().Set("Content-Type", "application/json")
+//		return c.JSON(http.StatusOK, metric)
+//		//	c.Response().Header().Set("Content-Type", "application/json")
+//		//return c.JSON(http.StatusOK, metric)
+//		//	return nil
+//	}
+//}
+
+//func AllMetricsJson(storage storage.Storage) echo.HandlerFunc {
+//	return func(c echo.Context) error {
+//		var metric models.Metrics
+//		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+//		m := storage.AllMetrics()
+//		result := "Gauge metrics:\n"
+//		for _ = range *m.Gauge {
+//			result += fmt.Sprintf("- %s = %f\n", metric.ID, &metric.Value)
+//		}
+//
+//		result += "Counter metrics:\n"
+//		for _ = range *m.Counter {
+//			result += fmt.Sprint("\n", metric.ID, metric.Delta)
+//		}
+//		err = c.String(http.StatusOK, result)
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	}
+//}
 
 func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
