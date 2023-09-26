@@ -39,7 +39,7 @@ func PostQueries(cfg *envs.Config) {
 func post(s *grequests.Session, url string, m models.Metrics) {
 	gz, err := compress(m)
 	if err != nil {
-		log.Fatalf("error on compressing metrics on request: %w", err)
+		log.Fatalf("error on compressing metrics on request: %v", err)
 	}
 	resp, err := s.Post(url, &grequests.RequestOptions{JSON: gz})
 	if err != nil {
