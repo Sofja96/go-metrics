@@ -59,8 +59,8 @@ func (s *MemStorage) GetGaugeValue(id string) float64 {
 }
 
 type AllMetrics struct {
-	Gauge   map[string]Gauge
-	Counter map[string]Counter
+	Gauge   map[string]Gauge   `json:"gauge"`
+	Counter map[string]Counter `json:"counter"`
 }
 
 func (s *MemStorage) AllMetrics() *AllMetrics {
@@ -76,4 +76,12 @@ func (s *MemStorage) UpdateGaugeData(gaugeData map[string]Gauge) {
 
 func (s *MemStorage) UpdateCounterData(counterData map[string]Counter) {
 	s.counterData = counterData
+}
+
+func (s *MemStorage) GetCounterData() map[string]Counter {
+	return s.counterData
+}
+
+func (s *MemStorage) GetGaugeData() map[string]Gauge {
+	return s.gaugeData
 }

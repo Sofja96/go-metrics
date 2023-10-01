@@ -11,8 +11,8 @@ import (
 
 func saveStorageToFile(s MemStorage, filePath string) error {
 	var metrics AllMetrics
-	metrics.Counter = s.counterData
-	metrics.Gauge = s.gaugeData
+	metrics.Counter = s.GetCounterData()
+	metrics.Gauge = s.GetGaugeData()
 
 	data, err := json.MarshalIndent(metrics, "", "   ")
 	if err != nil {
