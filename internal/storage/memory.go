@@ -26,7 +26,7 @@ func saveStorageToFile(s MemStorage, filePath string) error {
 func Storing(s MemStorage, filePath string, storeInterval int) {
 	dir, _ := path.Split(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err := os.MkdirAll(dir, 0750)
+		err := os.MkdirAll(dir, 0666)
 		if err != nil {
 			fmt.Println(err)
 		}
