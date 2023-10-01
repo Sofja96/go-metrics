@@ -14,6 +14,8 @@ type Storage interface {
 	AllMetrics() *AllMetrics
 	GetCounterValue(id string) int64
 	GetGaugeValue(id string) float64
+	UpdateCounterData(counterData map[string]Counter)
+	UpdateGaugeData(gaugeData map[string]Gauge)
 }
 
 type MemStorage struct {
@@ -21,13 +23,13 @@ type MemStorage struct {
 	counterData map[string]Counter
 }
 
-// NewMemStorage returns a new in memory storage instance.
-func NewMemStorage() *MemStorage {
-
-	return &MemStorage{
+func NewMemStorage(storeInterval int, filePath string, restore bool) *MemStorage {
+	storage := MemStorage{
 		gaugeData:   make(map[string]Gauge),
 		counterData: make(map[string]Counter),
 	}
+
+	return &storage
 }
 
 func (s *MemStorage) UpdateCounter(name string, value int64) {
@@ -57,46 +59,21 @@ func (s *MemStorage) GetGaugeValue(id string) float64 {
 }
 
 type AllMetrics struct {
-	Gauge   *map[string]Gauge
-	Counter *map[string]Counter
+	Gauge   map[string]Gauge
+	Counter map[string]Counter
 }
 
 func (s *MemStorage) AllMetrics() *AllMetrics {
 	return &AllMetrics{
-		Gauge:   &s.gaugeData,
-		Counter: &s.counterData,
+		Gauge:   s.gaugeData,
+		Counter: s.counterData,
 	}
 }
 
-//TODO
+func (s *MemStorage) UpdateGaugeData(gaugeData map[string]Gauge) {
+	s.gaugeData = gaugeData
+}
 
-// Мапы всегда передаются по ссылке, то есть за пределами MemStorage, например, в хендлерах,
-// мы сможем как-то изменять их. Для сдачи работы не критично,
-// но я бы еще добавил копирование мап и возвращал новые, или возвращал бы собственные структуры
-//type GaugeMetric struct {
-//	Name  string
-//	Value float64
-//}
-//type CounterMetric struct {
-//	Name  string
-//	Value int64
-//}
-//type AllMetrics struct {
-//	Gauges   map[string]GaugeMetric
-//	Counters map[string]CounterMetric
-//}
-
-//func (s *MemStorage) AllMetrics(name string, value float64) *AllMetrics {
-//	return &AllMetrics{
-//		// s.gaugeData: &Gauges
-//		Gauges:   make(map[string]GaugeMetric),
-//		 Gauges.Name = s.gaugeData[name]
-//
-//
-//
-//
-//		//Counters: make(map[string]CounterMetric),
-//		//	Gauges: s.gaugeData,
-//		//Counters: &[]CounterMetric,
-//	}
-//}
+func (s *MemStorage) UpdateCounterData(counterData map[string]Counter) {
+	s.counterData = counterData
+}

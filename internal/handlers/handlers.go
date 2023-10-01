@@ -103,12 +103,12 @@ func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 		ctx.Response().Header().Set("Content-Type", "text/html")
 		m := storage.AllMetrics()
 		result := "Gauge metrics:\n"
-		for name, value := range *m.Gauge {
+		for name, value := range m.Gauge {
 			result += fmt.Sprintf("- %s = %f\n", name, value)
 		}
 
 		result += "Counter metrics:\n"
-		for name, value := range *m.Counter {
+		for name, value := range m.Counter {
 			result += fmt.Sprintf("- %s = %d\n", name, value)
 		}
 		err := ctx.String(http.StatusOK, result)
