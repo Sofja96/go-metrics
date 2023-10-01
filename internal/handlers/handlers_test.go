@@ -13,7 +13,7 @@ import (
 )
 
 func TestAllMetrics(t *testing.T) {
-	s := storage.NewMemStorage()
+	s := storage.NewMemStorage(300, "", false)
 	e := CreateServer(s)
 	httpTestServer := httptest.NewServer(e)
 	defer httpTestServer.Close()
@@ -68,7 +68,7 @@ func TestAllMetrics(t *testing.T) {
 }
 
 func TestWebhook(t *testing.T) {
-	s := storage.NewMemStorage()
+	s := storage.NewMemStorage(300, "", false)
 	e := CreateServer(s)
 	httpTestServer := httptest.NewServer(e)
 	defer httpTestServer.Close()
@@ -150,7 +150,7 @@ func TestWebhook(t *testing.T) {
 }
 
 func TestGetMetric(t *testing.T) {
-	s := storage.NewMemStorage()
+	s := storage.NewMemStorage(300, "", false)
 	e := CreateServer(s)
 	httpTestServer := httptest.NewServer(e)
 	defer httpTestServer.Close()
