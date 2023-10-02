@@ -9,10 +9,10 @@ import (
 	"os"
 )
 
-func saveStorageToFile(s MemStorage, filePath string) error {
+func saveStorageToFile(s *MemStorage, filePath string) error {
 	var metrics AllMetrics
-	metrics.Counter = s.GetCounterData()
-	metrics.Gauge = s.GetGaugeData()
+	metrics.Counter = s.counterData
+	metrics.Gauge = s.gaugeData
 
 	data, err := json.MarshalIndent(metrics, "", "   ")
 	if err != nil {
@@ -23,7 +23,7 @@ func saveStorageToFile(s MemStorage, filePath string) error {
 
 }
 
-func Storing(s MemStorage, filePath string, storeInterval int) {
+func Dump(s *MemStorage, filePath string, storeInterval int) {
 	dir, _ := path.Split(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, 0666)
@@ -34,11 +34,14 @@ func Storing(s MemStorage, filePath string, storeInterval int) {
 	pollTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
 	defer pollTicker.Stop()
 	for range pollTicker.C {
-		saveStorageToFile(s, filePath)
+		err := saveStorageToFile(s, filePath)
+		if err != nil {
+			return
+		}
 	}
 }
 
-func LoadStorageFromFile(s MemStorage, filePath string) {
+func LoadStorageFromFile(s *MemStorage, filePath string) {
 	file, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println(err)

@@ -14,10 +14,10 @@ func main() {
 	s := storage.NewMemStorage(c.StoreInterval, c.FilePath, c.Restore)
 	if c.FilePath != "" {
 		if c.Restore {
-			storage.LoadStorageFromFile(*s, c.FilePath)
+			storage.LoadStorageFromFile(s, c.FilePath)
 		}
 		if c.StoreInterval != 0 {
-			go storage.Storing(*s, c.FilePath, c.StoreInterval)
+			go storage.Dump(s, c.FilePath, c.StoreInterval)
 		}
 	}
 	e := handlers.CreateServer(s)
