@@ -39,6 +39,7 @@ func GetMetrics() {
 	ValuesGauge["StackSys"] = float64(rtm.StackSys)
 	ValuesGauge["Sys"] = float64(rtm.Sys)
 	ValuesGauge["TotalAlloc"] = float64(rtm.TotalAlloc)
+	ValuesGauge["GCSys"] = float64(rtm.GCSys)
 
 	PollCount += 1
 }
