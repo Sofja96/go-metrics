@@ -60,19 +60,40 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
+//func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
+//	return func(c echo.Context) error {
+//		metricsType := c.Param("typeM")
+//		metricsName := c.Param("nameM")
+//		if len(storage.GetValue(metricsType, metricsName)) == 0 {
+//			return c.String(http.StatusNotFound, "")
+//		}
+//		err := c.String(http.StatusOK, storage.GetValue(metricsType, metricsName))
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	}
+//}
+
+func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
 		metricsName := c.Param("nameM")
-		if len(storage.GetValue(metricsType, metricsName)) == 0 {
-			return c.String(http.StatusNotFound, "")
+		var v string
+		switch metricsType {
+		case "counter":
+			value := storage.GetCounterValue(metricsName)
+			//	metric.Delta = &value
+			v = fmt.Sprint(value)
+		case "gauge":
+			value := storage.GetGaugeValue(metricsName)
+			v = fmt.Sprint(value)
+		default:
+			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
 		}
-		err := c.String(http.StatusOK, storage.GetValue(metricsType, metricsName))
-		if err != nil {
-			return err
-		}
-
-		return nil
+		c.Response().Header().Set("Content-Type", "text/plain; charset=utf-8")
+		return c.String(http.StatusOK, v)
 	}
 }
 

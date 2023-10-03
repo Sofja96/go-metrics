@@ -22,7 +22,7 @@ func CreateServer(s *storage.MemStorage) *echo.Echo {
 	e.POST("/update/", UpdateJSON(s))
 	e.POST("/value/", ValueJSON(s))
 	e.GET("/", AllMetrics(s))
-	e.GET("/value/:typeM/:nameM", ValueMetrics(s))
+	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
 	return e
 }

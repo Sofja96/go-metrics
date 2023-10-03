@@ -14,14 +14,16 @@ func main() {
 	s := storage.NewMemStorage(c.StoreInterval, c.FilePath, c.Restore)
 	if c.FilePath != "" {
 		if c.Restore {
-			storage.LoadStorageFromFile(s, c.FilePath)
+			err := storage.LoadStorageFromFile(s, c.FilePath)
+			if err != nil {
+				panic(err)
+			}
 		}
 		if c.StoreInterval != 0 {
 			go storage.Dump(s, c.FilePath, c.StoreInterval)
 		}
 	}
 	e := handlers.CreateServer(s)
-	//e.Use(middleware.WithLogging(sugar))
 	fmt.Println("Running server on", c.Address)
 	err := e.Start(c.Address)
 	if err != nil {

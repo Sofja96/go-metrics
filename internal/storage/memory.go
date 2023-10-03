@@ -2,7 +2,7 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"path"
 	"time"
 
@@ -23,12 +23,12 @@ func saveStorageToFile(s *MemStorage, filePath string) error {
 
 }
 
-func Dump(s *MemStorage, filePath string, storeInterval int) {
+func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	dir, _ := path.Split(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, 0666)
 		if err != nil {
-			fmt.Println(err)
+			log.Print(err)
 		}
 	}
 	pollTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
@@ -36,20 +36,21 @@ func Dump(s *MemStorage, filePath string, storeInterval int) {
 	for range pollTicker.C {
 		err := saveStorageToFile(s, filePath)
 		if err != nil {
-			return
+			log.Print(err)
 		}
 	}
+	return nil
 }
 
-func LoadStorageFromFile(s *MemStorage, filePath string) {
+func LoadStorageFromFile(s *MemStorage, filePath string) error {
 	file, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 	}
 
 	var data AllMetrics
 	if err := json.Unmarshal(file, &data); err != nil {
-		fmt.Println(err)
+		log.Print(err)
 	}
 
 	if len(data.Counter) != 0 {
@@ -58,4 +59,5 @@ func LoadStorageFromFile(s *MemStorage, filePath string) {
 	if len(data.Gauge) != 0 {
 		s.UpdateGaugeData(data.Gauge)
 	}
+	return err
 }
