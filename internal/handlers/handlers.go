@@ -109,6 +109,9 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 		if err != nil {
 			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
+		if len(metric.ID) == 0 {
+			return c.String(http.StatusNotFound, "")
+		}
 		switch metric.MType {
 		case "counter":
 			value, ok := s.GetCounterValue(metric.ID)
@@ -123,9 +126,12 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 			}
 			metric.Value = &value
 		default:
-			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
+			return c.String(http.StatusBadRequest, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
 		}
 		c.Response().Header().Set("Content-Type", "application/json")
+		if c.Request().Header.Get("Content-Type") != "application/json" {
+			return c.String(http.StatusUnsupportedMediaType, "")
+		}
 		return c.JSON(http.StatusOK, metric)
 	}
 }
