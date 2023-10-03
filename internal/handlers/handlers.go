@@ -60,22 +60,6 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 	}
 }
 
-//func ValueMetrics(storage storage.Storage) echo.HandlerFunc {
-//	return func(c echo.Context) error {
-//		metricsType := c.Param("typeM")
-//		metricsName := c.Param("nameM")
-//		if len(storage.GetValue(metricsType, metricsName)) == 0 {
-//			return c.String(http.StatusNotFound, "")
-//		}
-//		err := c.String(http.StatusOK, storage.GetValue(metricsType, metricsName))
-//		if err != nil {
-//			return err
-//		}
-//
-//		return nil
-//	}
-//}
-
 func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")

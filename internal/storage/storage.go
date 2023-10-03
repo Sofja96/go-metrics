@@ -6,7 +6,6 @@ type Counter int64
 type Storage interface {
 	UpdateCounter(name string, value int64)
 	UpdateGauge(name string, value float64)
-	//GetValue(t string, name string) string
 	AllMetrics() *AllMetrics
 	GetCounterValue(id string) (int64, bool)
 	GetGaugeValue(id string) (float64, bool)
@@ -33,16 +32,6 @@ func (s *MemStorage) UpdateCounter(name string, value int64) {
 func (s *MemStorage) UpdateGauge(name string, value float64) {
 	s.gaugeData[name] = Gauge(value)
 }
-
-//func (s *MemStorage) GetValue(t string, name string) string {
-//	var v string
-//	if val, ok := s.gaugeData[name]; ok && t == "gauge" {
-//		v = fmt.Sprint(val)
-//	} else if val, ok := s.counterData[name]; ok && t == "counter" {
-//		v = fmt.Sprint(val)
-//	}
-//	return v
-//}
 
 func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
 	_, ok := s.counterData[id]

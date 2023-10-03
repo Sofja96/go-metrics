@@ -13,7 +13,6 @@ func main() {
 	s := storage.NewMemStorage(c.StoreInterval, c.FilePath, c.Restore)
 	if c.FilePath != "" {
 		if c.Restore {
-			//	storage.LoadStorageFromFile(s, c.FilePath)
 			err := storage.LoadStorageFromFile(s, c.FilePath)
 			if err != nil {
 				log.Print(err)
