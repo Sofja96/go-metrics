@@ -21,6 +21,7 @@ func PostQueries(cfg *envs.Config) {
 		Headers: map[string]string{
 			"content-type":     "application/json",
 			"content-encoding": "gzip",
+			"Accept-Encoding":  "gzip",
 		},
 	}
 	session := grequests.NewSession(&ro)
