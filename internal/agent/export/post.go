@@ -38,7 +38,7 @@ func PostQueries(cfg *envs.Config) {
 func post(s *grequests.Session, url string, m models.Metrics) {
 	gz, err := compress(m)
 	if err != nil {
-		log.Println("error on compressing metrics on request: %v", err)
+		log.Printf("error on compressing metrics on request: %v", err)
 	}
 	resp, err := s.Post(url, &grequests.RequestOptions{JSON: gz})
 	if err != nil {
@@ -53,7 +53,7 @@ func compress(metrics models.Metrics) ([]byte, error) {
 	var b bytes.Buffer
 	js, err := json.Marshal(metrics)
 	if err != nil {
-		log.Println("impossible to marshall metrics: %s", err)
+		log.Printf("impossible to marshall metrics: %s", err)
 	}
 	gz, err := gzip.NewWriterLevel(&b, gzip.BestSpeed)
 	if err != nil {
