@@ -83,11 +83,16 @@ func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 		var v string
 		switch metricsType {
 		case "counter":
-			value := storage.GetCounterValue(metricsName)
-			//	metric.Delta = &value
+			value, ok := storage.GetCounterValue(metricsName)
+			if !ok {
+				return c.String(http.StatusNotFound, "")
+			}
 			v = fmt.Sprint(value)
 		case "gauge":
-			value := storage.GetGaugeValue(metricsName)
+			value, ok := storage.GetGaugeValue(metricsName)
+			if !ok {
+				return c.String(http.StatusNotFound, "")
+			}
 			v = fmt.Sprint(value)
 		default:
 			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
@@ -106,10 +111,16 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 		}
 		switch metric.MType {
 		case "counter":
-			value := s.GetCounterValue(metric.ID)
+			value, ok := s.GetCounterValue(metric.ID)
+			if !ok {
+				return c.String(http.StatusNotFound, "")
+			}
 			metric.Delta = &value
 		case "gauge":
-			value := s.GetGaugeValue(metric.ID)
+			value, ok := s.GetGaugeValue(metric.ID)
+			if !ok {
+				return c.String(http.StatusNotFound, "")
+			}
 			metric.Value = &value
 		default:
 			return c.String(http.StatusNotFound, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")

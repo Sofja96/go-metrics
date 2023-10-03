@@ -8,8 +8,8 @@ type Storage interface {
 	UpdateGauge(name string, value float64)
 	//GetValue(t string, name string) string
 	AllMetrics() *AllMetrics
-	GetCounterValue(id string) int64
-	GetGaugeValue(id string) float64
+	GetCounterValue(id string) (int64, bool)
+	GetGaugeValue(id string) (float64, bool)
 }
 
 type MemStorage struct {
@@ -44,12 +44,15 @@ func (s *MemStorage) UpdateGauge(name string, value float64) {
 //	return v
 //}
 
-func (s *MemStorage) GetCounterValue(id string) int64 {
-	return int64(s.counterData[id])
+func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
+	_, ok := s.counterData[id]
+	//return val, ok
+	return int64(s.counterData[id]), ok
 }
 
-func (s *MemStorage) GetGaugeValue(id string) float64 {
-	return float64(s.gaugeData[id])
+func (s *MemStorage) GetGaugeValue(id string) (float64, bool) {
+	_, ok := s.gaugeData[id]
+	return float64(s.gaugeData[id]), ok
 }
 
 type AllMetrics struct {
