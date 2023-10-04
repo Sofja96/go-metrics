@@ -7,7 +7,7 @@ import (
 )
 
 func TestUpdateCounter(t *testing.T) {
-	s := NewMemStorage()
+	s := NewMemStorage(300, "", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -29,7 +29,7 @@ func TestUpdateCounter(t *testing.T) {
 }
 
 func TestUpdateGauge(t *testing.T) {
-	s := NewMemStorage()
+	s := NewMemStorage(300, "", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -44,7 +44,7 @@ func TestUpdateGauge(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			s.UpdateGauge(test.metricsName, test.value)
-			assert.Equal(t, gauge(test.result), s.gaugeData[test.metricsName])
+			assert.Equal(t, Gauge(test.result), s.gaugeData[test.metricsName])
 		})
 	}
 }

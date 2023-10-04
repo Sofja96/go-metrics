@@ -1,6 +1,8 @@
 package metrics
 
-import "runtime"
+import (
+	"runtime"
+)
 
 var ValuesGauge = map[string]float64{}
 
@@ -8,7 +10,6 @@ var PollCount uint64
 
 func GetMetrics() {
 	var rtm runtime.MemStats
-	PollCount += 1
 	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
 
@@ -38,5 +39,7 @@ func GetMetrics() {
 	ValuesGauge["StackSys"] = float64(rtm.StackSys)
 	ValuesGauge["Sys"] = float64(rtm.Sys)
 	ValuesGauge["TotalAlloc"] = float64(rtm.TotalAlloc)
+	ValuesGauge["GCSys"] = float64(rtm.GCSys)
 
+	PollCount += 1
 }
