@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Sofja96/go-metrics.git/internal/database"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/labstack/echo/v4"
@@ -134,6 +135,24 @@ func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 			result += fmt.Sprintf("- %s = %d\n", name, value)
 		}
 		err := ctx.String(http.StatusOK, result)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func PingDB(db *database.Dbinstance) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("Content-Type", "text/html")
+		err := database.CheckConnection(db)
+		if err == nil {
+			ctx.String(http.StatusOK, "Connection database is OK")
+		} else {
+			ctx.String(http.StatusInternalServerError, "Connection database is OK")
+		}
+
 		if err != nil {
 			return err
 		}
