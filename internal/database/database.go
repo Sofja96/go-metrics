@@ -66,7 +66,7 @@ func CheckConnection(dbc *Postgres) error {
 	if dbc.db != nil {
 		err := dbc.db.Ping(context.Background())
 		if err != nil {
-			log.Printf("Unable to connect to database:", err)
+			log.Println("Unable to connect to database:", err)
 			//os.Exit(1)
 			return err
 		}
