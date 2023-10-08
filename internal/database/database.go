@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	//"github.com/jackc/pgx/v5/pgxpool"
@@ -72,8 +71,7 @@ func CheckConnection(dbc *Postgres) error {
 		}
 		return nil
 	}
-
-	return fmt.Errorf("Empty connection string")
+	return nil
 }
 
 //type Dbinstance struct {
