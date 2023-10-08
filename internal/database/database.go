@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"log"
 	//"github.com/jackc/pgx/v5/pgxpool"
 	//"sync"
 )
@@ -43,48 +44,93 @@ import (
 //	type postgres struct {
 //		db *pgxpool.Pool
 //	}
-type Dbinstance struct {
-	DSN string
+
+type Postgres struct {
+	db *pgxpool.Pool
 }
 
-func DBConnection(dsn string) *Dbinstance {
-	db := &Dbinstance{}
-	db.DSN = dsn
+func New(dsn string) *Postgres {
+	dbc := &Postgres{}
 
-	return db
-}
-
-func CheckConnection(db *Dbinstance) error {
-	if db.DSN == "" {
-		return errors.New("Empty connection string")
-	}
-	dbc, err := pgxpool.New(context.Background(), db.DSN)
-	//dbc, err := pgx.Open("pgx", db.DSN)
+	conn, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		return err
+		log.Println(err)
+		dbc.db = nil
+	} else {
+		dbc.db = conn
 	}
-	defer dbc.Close()
-	return nil
+	return dbc
 }
 
-//
-//func NewPG(ctx context.Context, connString string) (*postgres, error) {
-//	pgOnce.Do(func() {
-//		db, err := pgxpool.New(ctx, connString)
-//		if err != nil {
-//			return fmt.Errorf("unable to create connection pool: %w", err)
-//		}
-//
-//		pgInstance = &postgres{db}
-//	})
-//
-//	return pgInstance, nil
+func CheckConnection(dbc *Postgres) error {
+	if dbc.db != nil {
+		err := dbc.db.Ping(context.Background())
+		if err != nil {
+			log.Printf("Unable to connect to database:", err)
+			//os.Exit(1)
+			return err
+		}
+		return nil
+	}
+
+	return errors.New("Empty connection string")
+}
+
+//type Dbinstance struct {
+//	DSN string
 //}
 //
-//func (pg *postgres) Ping(ctx context.Context) error {
+//func DBConnection(dsn string) *Dbinstance {
+//	db := &Dbinstance{}
+//	db.DSN = dsn
+//
+//	return db
+//}
+//
+//func CheckConnection(db *Dbinstance) error {
+//	if db.DSN == "" {
+//		err := errors.New("Empty connection string")
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	//err := dbc.db.Ping()
+//	//if err != nil {
+//	//	return err
+//	//}
+//	dbc, err := pgxpool.New(context.Background(), db.DSN)
+//	//dbc, err := pgx.Open("pgx", db.DSN)
+//	if err != nil {
+//		fmt.Fprintln(os.Stderr, "Unable to connect to database:", err)
+//		os.Exit(1)
+//		//return err
+//	}
+//	defer dbc.Close()
+//	return nil
+//}
+//
+//func (pg *Postgres) Ping(ctx context.Context) error {
 //	return pg.db.Ping(ctx)
 //}
 //
-//func (pg *postgres) Close() {
-//	pg.db.Close()
-//}
+////
+////func NewPG(ctx context.Context, connString string) (*postgres, error) {
+////	pgOnce.Do(func() {
+////		db, err := pgxpool.New(ctx, connString)
+////		if err != nil {
+////			return fmt.Errorf("unable to create connection pool: %w", err)
+////		}
+////
+////		pgInstance = &postgres{db}
+////	})
+////
+////	return pgInstance, nil
+////}
+////
+////func (pg *postgres) Ping(ctx context.Context) error {
+////	return pg.db.Ping(ctx)
+////}
+////
+////func (pg *postgres) Close() {
+////	pg.db.Close()
+////}

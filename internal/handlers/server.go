@@ -16,7 +16,7 @@ type APIServer struct {
 	address string
 	logger  zap.SugaredLogger
 	config  *config.Config
-	db      *database.Dbinstance
+	db      *database.Postgres
 }
 
 func New() *APIServer {
@@ -26,7 +26,8 @@ func New() *APIServer {
 
 	a.address = c.Address
 	//a.config = &conf
-	a.db = database.DBConnection(c.DatabaseDSN)
+	a.db = database.New(c.DatabaseDSN)
+	log.Println("DSN", c.DatabaseDSN)
 	a.echo = echo.New()
 	a.storage = storage.NewMemStorage(c.StoreInterval, c.FilePath, c.Restore)
 	if c.FilePath != "" {
@@ -70,6 +71,7 @@ func (a *APIServer) Start() error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Running server on", a.address)
 
 	return nil
 }

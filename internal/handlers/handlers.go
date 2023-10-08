@@ -143,14 +143,14 @@ func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func PingDB(db *database.Dbinstance) echo.HandlerFunc {
+func PingDB(db *database.Postgres) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")
 		err := database.CheckConnection(db)
 		if err == nil {
 			ctx.String(http.StatusOK, "Connection database is OK")
 		} else {
-			ctx.String(http.StatusInternalServerError, "Connection database is OK")
+			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
 		}
 
 		if err != nil {
