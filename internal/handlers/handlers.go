@@ -120,20 +120,95 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func AllMetrics(storage storage.Storage) echo.HandlerFunc {
+//func AllMetrics(storage storage.Storage) echo.HandlerFunc {
+//	return func(ctx echo.Context) error {
+//		ctx.Response().Header().Set("Content-Type", "text/html")
+//		m := storage.AllMetrics()
+//		result := "Gauge metrics:\n"
+//		for name, value := range m.Gauge {
+//			result += fmt.Sprintf("- %s = %f\n", name, value)
+//		}
+//
+//		result += "Counter metrics:\n"
+//		for name, value := range m.Counter {
+//			result += fmt.Sprintf("- %s = %d\n", name, value)
+//		}
+//		err := ctx.String(http.StatusOK, result)
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	}
+//}
+
+//func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
+//	return func(ctx echo.Context) error {
+//		ctx.Response().Header().Set("Content-Type", "text/html")
+//		gaugesMetric, err := storage.GetAllGauges()
+//		if err != nil {
+//			return ctx.String(http.StatusInternalServerError, "")
+//		}
+//		counterMetric, err := storage.GetAllCounters()
+//		if err != nil {
+//			return ctx.String(http.StatusInternalServerError, "")
+//		}
+//
+//		fmt.Fprint(ctx.Response().Writer, "<html><body><h1>Metrics</h1><ul>")
+//		fmt.Fprint(ctx.Response().Writer, "<h2>Gauges</h2><ul>")
+//		for _, metric := range gaugesMetric {
+//			fmt.Fprintf(ctx.Response().Writer, "<li>%s: %v</li>", metric.Name, metric.Value)
+//		}
+//		fmt.Fprint(ctx.Response().Writer, "</ul>")
+//
+//		fmt.Fprint(ctx.Response().Writer, "</ul><h2>Counters</h2><ul>")
+//		for _, metric := range counterMetric {
+//			fmt.Fprintf(ctx.Response().Writer, "<li>%s: %v</li>", metric.Name, metric.Value)
+//		}
+//		fmt.Fprint(ctx.Response().Writer, "</ul></body></html>")
+//		//	m := storage.AllMetrics()
+//
+//		//result := "Gauge metrics:\n"
+//		//for _, metric := range gaugesMetric {
+//		//	result += fmt.Sprintf("- %s = %f\n", metric.Name, metric.Value)
+//		//}
+//		//
+//		//result += "Counter metrics:\n"
+//		//for _, metric := range counterMetric {
+//		//	result += fmt.Sprintf("- %s = %d\n", metric.Name, metric.Value)
+//		//}
+//		err = ctx.String(http.StatusOK, "")
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	}
+//}
+
+func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")
-		m := storage.AllMetrics()
-		result := "Gauge metrics:\n"
-		for name, value := range m.Gauge {
-			result += fmt.Sprintf("- %s = %f\n", name, value)
+		gaugesMetric, err := storage.GetAllGauges()
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, "")
 		}
+		counterMetric, err := storage.GetAllCounters()
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, "")
+		}
+		//	m := storage.AllMetrics()
+		var result string
 
-		result += "Counter metrics:\n"
-		for name, value := range m.Counter {
-			result += fmt.Sprintf("- %s = %d\n", name, value)
+		result += "Gauge metrics:\n"
+		for _, metric := range gaugesMetric {
+			result += fmt.Sprintf("- %s = %.2f\n", metric.Name, metric.Value)
 		}
-		err := ctx.String(http.StatusOK, result)
+		result += "Counter metrics:\n"
+		for _, metric := range counterMetric {
+			result += fmt.Sprintf("- %s = %d\n", metric.Name, metric.Value)
+		}
+		err = ctx.String(http.StatusOK, result)
 		if err != nil {
 			return err
 		}
@@ -141,3 +216,38 @@ func AllMetrics(storage storage.Storage) echo.HandlerFunc {
 		return nil
 	}
 }
+
+func Ping(storage storage.Storage) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("Content-Type", "text/html")
+		err := storage.Ping()
+		if err == nil {
+			ctx.String(http.StatusOK, "Connection database is OK")
+		} else {
+			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
+		}
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+//func PingDB(db *database.Postgres) echo.HandlerFunc {
+//	return func(ctx echo.Context) error {
+//		ctx.Response().Header().Set("Content-Type", "text/html")
+//		err := database.CheckConnection(db)
+//		if err == nil {
+//			ctx.String(http.StatusOK, "Connection database is OK")
+//		} else {
+//			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
+//		}
+//
+//		if err != nil {
+//			return err
+//		}
+//
+//		return nil
+//	}
+//}
