@@ -12,10 +12,10 @@ import (
 func ParseFlags(s *Config) {
 	//var conf Config
 	flag.StringVar(&s.Address, "a", "localhost:8080", "address and port to run server")
-	flag.StringVar(&s.FilePath, "f", "", "path file storage to save data")
+	flag.StringVar(&s.FilePath, "f", "tmp/metriss-db.json", "path file storage to save data")
 	flag.IntVar(&s.StoreInterval, "i", 300, "interval for saving metrics on the server")
 	flag.BoolVar(&s.Restore, "r", true, "need to load data at startup")
-	flag.StringVar(&s.DatabaseDSN, "d", "postgres://metrics:userpassword@localhost:5432/metrics", "connect to database")
+	flag.StringVar(&s.DatabaseDSN, "d", "", "connect to database")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
