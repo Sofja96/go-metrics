@@ -10,12 +10,11 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/levigross/grequests"
 	"log"
-	"math/rand"
 )
 
 func PostQueries(cfg *envs.Config) {
 	metrics.GetMetrics()
-	allMetrics := make([]models.Metrics, 0)
+	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
 	log.Println("Running agent on", cfg.Address)
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
 	ro := grequests.RequestOptions{
@@ -28,19 +27,19 @@ func PostQueries(cfg *envs.Config) {
 	session := grequests.NewSession(&ro)
 	for k, v := range metrics.ValuesGauge {
 		allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: k, Value: &v})
-		post(session, url, allMetrics)
+		//	post(session, url, allMetrics)
 	}
 
-	//for k, v := range metrics.ValuesCounter {
-	//	allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
-	//}
-	var pc = int64(metrics.PollCount)
-	allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: "PollCount", Delta: &pc})
+	for k, v := range metrics.ValuesCounter {
+		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
+	}
+	//var pc = int64(metrics.PollCount)
+	//allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: "PollCount", Delta: &pc})
+	//post(session, url, allMetrics)
+	//r := rand.Float64()
+	//allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: "RandomValue", Value: &r})
 	post(session, url, allMetrics)
-	r := rand.Float64()
-	allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: "RandomValue", Value: &r})
-	post(session, url, allMetrics)
-	metrics.PollCount = 0
+	//metrics.PollCount = 0
 
 }
 
