@@ -118,7 +118,7 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 		}
 		if len(metrics) == 0 {
 			log.Println("Batch is empty")
-			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Batch is empty"))
+			return ctx.String(http.StatusBadRequest, fmt.Sprintf(""))
 		}
 		//
 		//updateGaguges := make([]storage.GaugeMetric, 0, len(metrics))

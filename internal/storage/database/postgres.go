@@ -232,7 +232,6 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 		}
 		results = append(results, v)
 	}
-
 	return tx.Commit(ctx)
 	//encoder := json.NewEncoder(w)
 }

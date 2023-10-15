@@ -10,7 +10,7 @@ var ValuesGauge = map[string]float64{}
 
 var ValuesCounter = map[string]int64{}
 
-var PollCount uint64
+//var PollCount uint64
 
 func GetMetrics() []models.Metrics {
 	//var metrics []models.Metrics
@@ -49,7 +49,7 @@ func GetMetrics() []models.Metrics {
 
 	ValuesCounter["PollCount"]++
 
-	PollCount += 1
+	//PollCount += 1
 
 	return nil
 }
