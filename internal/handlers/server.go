@@ -204,6 +204,7 @@ func CreateServer(s storage.Storage) *echo.Echo {
 	e.Use(middleware.WithLogging(sugar))
 	e.Use(middleware.GzipMiddleware())
 	e.POST("/update/", UpdateJSON(s))
+	e.POST("/updates/", UpdatesBatch(s))
 	e.POST("/value/", ValueJSON(s))
 	e.GET("/", GetAllMetrics(s))
 	e.GET("/value/:typeM/:nameM", ValueMetric(s))

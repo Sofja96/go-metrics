@@ -6,6 +6,7 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -54,9 +55,106 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		default:
 			return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
 		}
+		//encoder := json.NewEncoder(ctx.Response().Writer)
+		//err = encoder.Encode(&metric)
+		//if err != nil {
+		//	return ctx.String(http.StatusInternalServerError, "")
+		//}
 
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		return ctx.JSON(http.StatusOK, metric)
+	}
+}
+
+//func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
+//	return func(ctx echo.Context) error {
+//		var metrics []models.Metrics
+//		err := json.NewDecoder(ctx.Request().Body).Decode(&metrics)
+//		if err != nil {
+//			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+//		}
+//		if len(metrics) == 0 {
+//			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Batch is empty"))
+//		}
+//
+//		updateGaguges := make([]storage.GaugeMetric, 0, len(metrics))
+//		updateCounters := make([]storage.CounterMetric, 0, len(metrics))
+//		for _, metric := range metrics {
+//			switch metric.MType {
+//			case "gauge":
+//				if metric.Value == nil {
+//					return ctx.String(http.StatusBadRequest, fmt.Sprintf("not value gauge metric"))
+//				}
+//				//updateGaguges = append(updateGaguges, storage.GaugeMetric{Name: metric.ID, Value: *metric.Value})
+//				s.UpdateGauges(updateGaguges)
+//			case "counter":
+//				if metric.Delta == nil {
+//					return ctx.String(http.StatusBadRequest, fmt.Sprintf("not value counter metric"))
+//				}
+//				//updateCounters = append(updateCounters, storage.CounterMetric{Name: metric.ID, Value: *metric.Delta})
+//				s.UpdateCounters(updateCounters)
+//			default:
+//				return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
+//			}
+//
+//		}
+//		//
+//		//
+//		//err = s.BatchUpdate(metrics)
+//		//if err != nil {
+//		//	ctx.String(http.StatusInternalServerError, "")
+//		//}
+//		ctx.Response().Header().Set("Content-Type", "application/json")
+//		return ctx.String(http.StatusOK, "")
+//	}
+//}
+
+func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		var metrics []models.Metrics
+		err := json.NewDecoder(ctx.Request().Body).Decode(&metrics)
+		if err != nil {
+			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+		}
+		if len(metrics) == 0 {
+			log.Println("Batch is empty")
+			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Batch is empty"))
+		}
+		//
+		//updateGaguges := make([]storage.GaugeMetric, 0, len(metrics))
+		//updateCounters := make([]storage.CounterMetric, 0, len(metrics))
+		//for _, metric := range metrics {
+		//	switch metric.MType {
+		//	case "gauge":
+		//		if metric.Value == nil {
+		//			return ctx.String(http.StatusBadRequest, fmt.Sprintf("not value gauge metric"))
+		//		}
+		//		//updateGaguges = append(updateGaguges, storage.GaugeMetric{Name: metric.ID, Value: *metric.Value})
+		//		s.UpdateGauges(updateGaguges)
+		//	case "counter":
+		//		if metric.Delta == nil {
+		//			return ctx.String(http.StatusBadRequest, fmt.Sprintf("not value counter metric"))
+		//		}
+		//		//updateCounters = append(updateCounters, storage.CounterMetric{Name: metric.ID, Value: *metric.Delta})
+		//		s.UpdateCounters(updateCounters)
+		//	default:
+		//		return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
+		//	}
+		//
+		//}
+		//
+		//
+		err = s.BatchUpdate(metrics)
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, "")
+		}
+		encoder := json.NewEncoder(ctx.Response().Writer)
+		err = encoder.Encode(metrics[0])
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, "error occured on encoding result of batchupdate :%w")
+		}
+		ctx.Response().Header().Set("Content-Type", "application/json")
+		return ctx.String(http.StatusOK, "")
 	}
 }
 

@@ -3,7 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
+	"github.com/jackc/pgx/v5"
 	"time"
 
 	//	"github.com/Sofja96/go-metrics.git/store/storage/database"
@@ -210,6 +212,29 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	//}
 
 	return counters, nil
+}
+
+func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
+	ctx := context.Background()
+	tx, err := pg.DB.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	results := make([]models.Metrics, len(metrics))
+	for _, v := range metrics {
+		switch v.MType {
+		case "gauge":
+			pg.UpdateGauge(v.ID, *v.Value)
+		case "counter":
+			val, _ := pg.UpdateCounter(v.ID, *v.Delta)
+			*v.Delta = val
+		}
+		results = append(results, v)
+	}
+
+	return tx.Commit(ctx)
+	//encoder := json.NewEncoder(w)
 }
 
 //func (pg *Postgres) AllMetrics() *memory.AllMetrics {

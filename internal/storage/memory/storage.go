@@ -3,6 +3,7 @@ package memory
 import (
 	"errors"
 	"fmt"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/Sofja96/go-metrics.git/internal/storage/database"
 	"log"
@@ -79,10 +80,36 @@ func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
 	return value, nil
 }
 
+//func (s *MemStorage) UpdateCounters(metrics []storage.CounterMetric) ([]storage.CounterMetric, error) {
+//	for _, v := range metrics {
+//		s.counterData[v.Name] += Counter(v.Value)
+//		//switch v.MType {
+//		//case "gauge":
+//		//	s.UpdateGauge(v.ID, *v.Value)
+//		//case "counter":
+//		//	s.UpdateCounter(v.ID, *v.Delta)
+//
+//	}
+//	return metrics, nil
+//}
+
 func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
 	s.gaugeData[name] = Gauge(value)
 	return value, nil
 }
+
+//func (s *MemStorage) UpdateGauges(metrics []storage.GaugeMetric) ([]storage.GaugeMetric, error) {
+//	for _, v := range metrics {
+//		s.gaugeData[v.Name] = Gauge(v.Value)
+//		//switch v.MType {
+//		//case "gauge":
+//		//	s.UpdateGauge(v.ID, *v.Value)
+//		//case "counter":
+//		//	s.UpdateCounter(v.ID, *v.Delta)
+//
+//	}
+//	return metrics, nil
+//}
 
 func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
 	_, ok := s.counterData[id]
@@ -132,4 +159,18 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 	}
 
 	return counters, nil
+}
+
+func (s *MemStorage) BatchUpdate(metrics []models.Metrics) error {
+	for _, v := range metrics {
+		switch v.MType {
+		case "gauge":
+			s.UpdateGauge(v.ID, *v.Value)
+		case "counter":
+			s.UpdateCounter(v.ID, *v.Delta)
+
+		}
+	}
+
+	return nil
 }

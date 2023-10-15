@@ -15,8 +15,9 @@ import (
 
 func PostQueries(cfg *envs.Config) {
 	metrics.GetMetrics()
+	allMetrics := make([]models.Metrics, 0)
 	log.Println("Running agent on", cfg.Address)
-	url := fmt.Sprintf("http://%s/update/", cfg.Address)
+	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
 	ro := grequests.RequestOptions{
 		Headers: map[string]string{
 			"content-type":     "application/json",
@@ -26,17 +27,24 @@ func PostQueries(cfg *envs.Config) {
 	}
 	session := grequests.NewSession(&ro)
 	for k, v := range metrics.ValuesGauge {
-		post(session, url, models.Metrics{MType: "gauge", ID: k, Value: &v})
+		allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: k, Value: &v})
+		post(session, url, allMetrics)
 	}
+
+	//for k, v := range metrics.ValuesCounter {
+	//	allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
+	//}
 	var pc = int64(metrics.PollCount)
-	post(session, url, models.Metrics{MType: "counter", ID: "PollCount", Delta: &pc})
+	allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: "PollCount", Delta: &pc})
+	post(session, url, allMetrics)
 	r := rand.Float64()
-	post(session, url, models.Metrics{MType: "gauge", ID: "RandomValue", Value: &r})
+	allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: "RandomValue", Value: &r})
+	post(session, url, allMetrics)
 	metrics.PollCount = 0
 
 }
 
-func post(s *grequests.Session, url string, m models.Metrics) {
+func post(s *grequests.Session, url string, m []models.Metrics) {
 	gz, err := compress(m)
 	if err != nil {
 		log.Printf("error on compressing metrics on request: %v", err)
@@ -50,7 +58,7 @@ func post(s *grequests.Session, url string, m models.Metrics) {
 	log.Println(resp.RawResponse)
 }
 
-func compress(metrics models.Metrics) ([]byte, error) {
+func compress(metrics []models.Metrics) ([]byte, error) {
 	var b bytes.Buffer
 	js, err := json.Marshal(metrics)
 	if err != nil {
