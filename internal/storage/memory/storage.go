@@ -1,11 +1,13 @@
 package memory
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/Sofja96/go-metrics.git/internal/storage/database"
+	"io"
 	"log"
 	"os"
 )
@@ -161,7 +163,7 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (s *MemStorage) BatchUpdate(metrics []models.Metrics) error {
+func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
@@ -170,6 +172,11 @@ func (s *MemStorage) BatchUpdate(metrics []models.Metrics) error {
 			s.UpdateCounter(v.ID, *v.Delta)
 
 		}
+	}
+
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(metrics[0]); err != nil {
+		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
 
 	return nil
