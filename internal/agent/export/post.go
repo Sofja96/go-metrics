@@ -39,14 +39,14 @@ func PostQueries(cfg *envs.Config) {
 	postBatch(retryClient, url, allMetrics)
 }
 
-func postBatch(r *retryablehttp.Client, url string, m []models.Metrics) {
+func postBatch(r *retryablehttp.Client, url string, m []models.Metrics) error {
 	gz, err := compress(m)
 	if err != nil {
-		fmt.Errorf("error on compressing metrics on request: %w", err)
+		return fmt.Errorf("error on compressing metrics on request: %w", err)
 	}
 	req, err := retryablehttp.NewRequest("POST", url, gz)
 	if err != nil {
-		fmt.Errorf("error connection: %w", err)
+		return fmt.Errorf("error connection: %w", err)
 	}
 
 	req.Header.Add("content-type", "application/json")
@@ -60,14 +60,15 @@ func postBatch(r *retryablehttp.Client, url string, m []models.Metrics) {
 	log.Println(resp.StatusCode)
 	log.Println(resp.Header)
 	log.Println(resp.Body)
-	log.Println(req.GetBody)
+
+	return nil
 }
 
 func compress(metrics []models.Metrics) ([]byte, error) {
 	var b bytes.Buffer
 	js, err := json.Marshal(metrics)
 	if err != nil {
-		fmt.Errorf("impossible to marshall metrics: %w", err)
+		return nil, err
 	}
 	gz, err := gzip.NewWriterLevel(&b, gzip.BestSpeed)
 	if err != nil {
@@ -76,12 +77,12 @@ func compress(metrics []models.Metrics) ([]byte, error) {
 
 	_, err = gz.Write(js)
 	if err != nil {
-		return nil, fmt.Errorf("failed write data to compress temporary buffer: %w", err)
+		return nil, err
 	}
 
 	err = gz.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed compress data: %w", err)
+		return nil, err
 	}
 	return b.Bytes(), nil
 }

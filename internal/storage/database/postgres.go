@@ -66,7 +66,7 @@ func NewStorage(dsn string) (*Postgres, error) {
 func (pg *Postgres) initDB(ctx context.Context) error {
 	err := pg.DB.Ping(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to connect to database: %w", err)
+		return fmt.Errorf("unable to connect to database: %w", err)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
@@ -100,7 +100,7 @@ func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 	ctx := context.Background()
 	_, err := pg.DB.Exec(ctx, "INSERT INTO gauge_metrics(name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
 	if err != nil {
-		fmt.Errorf("error insert gauge: %w", err)
+		return 0, fmt.Errorf("error insert gauge: %w", err)
 	}
 	return value, nil
 }
@@ -131,10 +131,10 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 	gauges := make([]storage.GaugeMetric, 0)
 	rowsGauge, err := pg.DB.Query(ctx, "SELECT name, value FROM gauge_metrics;")
 	if err != nil {
-		fmt.Errorf("error selecting all gauges: %w", err)
+		return nil, fmt.Errorf("error selecting all gauges: %w", err)
 	}
 	if err := rowsGauge.Err(); err != nil {
-		fmt.Errorf("error selecting all gauges: %w", err)
+		return nil, fmt.Errorf("error selecting all gauges: %w", err)
 	}
 	defer rowsGauge.Close()
 
@@ -142,7 +142,7 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 		var gm storage.GaugeMetric
 		err = rowsGauge.Scan(&gm.Name, &gm.Value)
 		if err != nil {
-			fmt.Errorf("error scanning all gauges: %w", err)
+			return nil, fmt.Errorf("error scanning all gauges: %w", err)
 		}
 		pg.UpdateGauge(gm.Name, gm.Value)
 		gauges = append(gauges, gm)
@@ -158,10 +158,10 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	ctx := context.Background()
 	rowsCounter, err := pg.DB.Query(ctx, "SELECT name, value FROM counter_metrics;")
 	if err != nil {
-		fmt.Errorf("error selecting all counter: %w", err)
+		return nil, fmt.Errorf("error selecting all counter: %w", err)
 	}
 	if err := rowsCounter.Err(); err != nil {
-		fmt.Errorf("error selecting all counter: %w", err)
+		return nil, fmt.Errorf("error selecting all counter: %w", err)
 	}
 	defer rowsCounter.Close()
 
@@ -169,7 +169,7 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 		var cm storage.CounterMetric
 		err = rowsCounter.Scan(&cm.Name, &cm.Value)
 		if err != nil {
-			fmt.Errorf("error scanning all counter: %w", err)
+			return nil, fmt.Errorf("error scanning all counter: %w", err)
 		}
 		pg.UpdateCounter(cm.Name, cm.Value)
 		counters = append(counters, cm)

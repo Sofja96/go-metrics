@@ -28,7 +28,7 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, 0666)
 		if err != nil {
-			return fmt.Errorf("Error create or read file: %w", err)
+			return fmt.Errorf("error create or read file: %w", err)
 		}
 	}
 	pollTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)

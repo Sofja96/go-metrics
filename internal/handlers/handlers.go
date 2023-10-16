@@ -115,8 +115,7 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
 		if len(metrics) == 0 {
-			err = fmt.Errorf("metric is empty")
-			return ctx.String(http.StatusBadRequest, "")
+			return ctx.String(http.StatusBadRequest, "metric is empty")
 		}
 		//
 		//updateGaguges := make([]storage.GaugeMetric, 0, len(metrics))
