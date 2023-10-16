@@ -88,7 +88,7 @@ func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
 	ctx := context.Background()
 	var newValue int64
-	raw := pg.DB.QueryRow(ctx, "INSERT INTO counter_metrics(name, value)VALUES ($1, $2)	ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + %2 RETURNING value", name, value)
+	raw := pg.DB.QueryRow(ctx, "INSERT INTO counter_metrics(name, value)VALUES ($1, $2)	ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + $2 RETURNING value", name, value)
 	err := raw.Scan(&newValue)
 	if err != nil {
 		return 0, fmt.Errorf("error insert counter: %w", err)
