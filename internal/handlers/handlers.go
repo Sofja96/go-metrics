@@ -69,14 +69,9 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 		if len(metrics) == 0 {
 			return ctx.String(http.StatusBadRequest, "metric is empty")
 		}
-		err = s.BatchUpdate(metrics)
+		err = s.BatchUpdate(ctx.Response().Writer, metrics)
 		if err != nil {
 			ctx.String(http.StatusInternalServerError, "")
-		}
-		encoder := json.NewEncoder(ctx.Response().Writer)
-		err = encoder.Encode(metrics[0])
-		if err != nil {
-			return ctx.String(http.StatusInternalServerError, "error occured on encoding result of batchupdate :%w")
 		}
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		return ctx.String(http.StatusOK, "")

@@ -2,16 +2,14 @@ package database
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"io"
 	"time"
 
-	//	"github.com/Sofja96/go-metrics.git/store/storage/database"
-	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	//"github.com/jackc/pgx/v5/pgxpool"
@@ -156,70 +154,29 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (pg *Postgres) batchUpdate(gauge []models.Metrics, counter []models.Metrics) error {
+func (pg *Postgres) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 	ctx := context.Background()
 	tx, err := pg.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
 	}
 	defer tx.Rollback(ctx)
-	gaugeQuery := `INSERT INTO gauge_metrics(name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2`
-	gaugebatch := &pgx.Batch{}
-	for _, v := range gauge {
-		gaugebatch.Queue(gaugeQuery, v.ID, &v.Value)
-	}
-
-	err = pg.DB.SendBatch(ctx, gaugebatch).Close()
-	if err != nil {
-		return fmt.Errorf("error batch gauge update: %w", err)
-	}
-
-	counterQuery := `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + $2`
-	counterbatch := &pgx.Batch{}
-	for _, v := range counter {
-		counterbatch.Queue(counterQuery, v.ID, &v.Delta)
-	}
-
-	err = pg.DB.SendBatch(ctx, counterbatch).Close()
-	if err != nil {
-		return fmt.Errorf("error batch counter update: %w", err)
-	}
-
-	return tx.Commit(ctx)
-
-}
-
-func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
-	ctx := context.Background()
-	var gauge []models.Metrics
-	var counter []models.Metrics
+	encoder := json.NewEncoder(w)
+	results := make([]models.Metrics, len(metrics))
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			gauge = append(gauge, v)
+			pg.UpdateGauge(v.ID, *v.Value)
 		case "counter":
-			counter = append(counter, v)
+			val, _ := pg.UpdateCounter(v.ID, *v.Delta)
+			*v.Delta = val
 		}
+		results = append(results, v)
 	}
-	for i := 0; ; i++ {
-		err := pg.batchUpdate(gauge, counter)
-		if err == nil || i >= retry {
-			return err
-		}
-
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
-			select {
-			case <-time.After(delays[i]):
-				continue
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
-		return err
-
+	if err := encoder.Encode(results[0]); err != nil {
+		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
-
+	return tx.Commit(ctx)
 }
 
 func (pg *Postgres) Ping() error {
