@@ -16,9 +16,6 @@ import (
 	//"sync"
 )
 
-var retry = 3
-var delays = []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-
 type Postgres struct {
 	DB *pgxpool.Pool
 }
