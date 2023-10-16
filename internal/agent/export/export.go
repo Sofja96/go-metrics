@@ -43,7 +43,7 @@ func post(r *retryablehttp.Client, url string, m models.Metrics) error {
 	req.Header.Add("Accept-Encoding", "gzip")
 	resp, err := r.Do(req)
 	if err != nil {
-		fmt.Errorf("error connection: %w", err)
+		return fmt.Errorf("error connection: %w", err)
 	}
 	defer resp.Body.Close()
 	log.Println(resp.StatusCode)
