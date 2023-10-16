@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
-	"io"
 )
 
 //import "github.com/Sofja96/go-metrics.git/internal/storage/memory"
@@ -18,7 +17,7 @@ type Storage interface {
 	GetAllCounters() ([]CounterMetric, error)
 	//UpdateGauges(metrics []GaugeMetric) ([]GaugeMetric, error)
 	//UpdateCounters(metrics []CounterMetric) ([]CounterMetric, error)
-	BatchUpdate(w io.Writer, metrics []models.Metrics) error
+	BatchUpdate(metrics []models.Metrics) error
 }
 
 type CounterMetric struct {

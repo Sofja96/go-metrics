@@ -6,7 +6,6 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/labstack/echo/v4"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -58,9 +57,8 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		//encoder := json.NewEncoder(ctx.Response().Writer)
 		//err = encoder.Encode(&metric)
 		//if err != nil {
-		//	return ctx.String(http.StatusInternalServerError, "")
+		//	return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error in JSON encode: %s", err))
 		//}
-
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		return ctx.JSON(http.StatusOK, metric)
 	}
@@ -117,7 +115,7 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
 		if len(metrics) == 0 {
-			log.Println("Batch is empty")
+			err = fmt.Errorf("metric is empty")
 			return ctx.String(http.StatusBadRequest, "")
 		}
 		//
@@ -144,15 +142,15 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 		//}
 		//
 		//
-		err = s.BatchUpdate(ctx.Response().Writer, metrics)
+		err = s.BatchUpdate(metrics)
 		if err != nil {
 			ctx.String(http.StatusInternalServerError, "")
 		}
-		//encoder := json.NewEncoder(ctx.Response().Writer)
-		//err = encoder.Encode(metrics[0])
-		//if err != nil {
-		//	return ctx.String(http.StatusInternalServerError, "error occured on encoding result of batchupdate :%w")
-		//}
+		encoder := json.NewEncoder(ctx.Response().Writer)
+		err = encoder.Encode(metrics[0])
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, "error occured on encoding result of batchupdate :%w")
+		}
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		return ctx.String(http.StatusOK, "")
 	}
@@ -308,7 +306,7 @@ func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 		}
 		err = ctx.String(http.StatusOK, result)
 		if err != nil {
-			return err
+			return fmt.Errorf("error get all metrics: %w", err)
 		}
 
 		return nil
@@ -325,9 +323,8 @@ func Ping(storage storage.Storage) echo.HandlerFunc {
 			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("error connection db: %w", err)
 		}
-
 		return nil
 	}
 }

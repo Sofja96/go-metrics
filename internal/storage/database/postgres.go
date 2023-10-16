@@ -2,15 +2,16 @@ package database
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/jackc/pgx/v5"
-	"io"
+	"github.com/jackc/pgx/v5/pgconn"
 	"time"
 
 	//	"github.com/Sofja96/go-metrics.git/store/storage/database"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	//"github.com/jackc/pgx/v5/pgxpool"
@@ -26,6 +27,9 @@ import (
 //	name  string
 //	value float64
 //}
+
+var retry = 3
+var delays = []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
 
 type Postgres struct {
 	DB *pgxpool.Pool
@@ -45,20 +49,16 @@ func NewStorage(dsn string) (*Postgres, error) {
 
 	conn, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		log.Println(err)
 		dbc.DB = nil
+		return nil, err
 	} else {
-		//err := Truncate(dbc)
-		//if err != nil {
-		//	log.Println(err)
-		//}
 		dbc.DB = conn
 	}
 
 	err = dbc.initDB(context.Background())
 	if err != nil {
 		log.Println(err)
-		return nil, nil
+		return nil, fmt.Errorf("error init db: %w", err)
 	}
 	return dbc, nil
 }
@@ -66,9 +66,7 @@ func NewStorage(dsn string) (*Postgres, error) {
 func (pg *Postgres) initDB(ctx context.Context) error {
 	err := pg.DB.Ping(ctx)
 	if err != nil {
-		log.Println("Unable to connect to database:", err)
-		//os.Exit(1)
-		return err
+		return fmt.Errorf("Unable to connect to database: %w", err)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
@@ -102,7 +100,7 @@ func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 	ctx := context.Background()
 	_, err := pg.DB.Exec(ctx, "INSERT INTO gauge_metrics(name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
 	if err != nil {
-		log.Println(err)
+		fmt.Errorf("error insert gauge: %w", err)
 	}
 	return value, nil
 }
@@ -112,7 +110,7 @@ func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
 	raw := pg.DB.QueryRow(ctx, "INSERT INTO counter_metrics(name, value)VALUES ($1, $2)	ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + $2 RETURNING value", name, value)
 	err := raw.Scan(&newValue)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error insert counter: %w", err)
 	}
 	return newValue, nil
 }
@@ -133,10 +131,10 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 	gauges := make([]storage.GaugeMetric, 0)
 	rowsGauge, err := pg.DB.Query(ctx, "SELECT name, value FROM gauge_metrics;")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Errorf("error selecting all gauges: %w", err)
 	}
 	if err := rowsGauge.Err(); err != nil {
-		fmt.Println(err)
+		fmt.Errorf("error selecting all gauges: %w", err)
 	}
 	defer rowsGauge.Close()
 
@@ -144,40 +142,11 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 		var gm storage.GaugeMetric
 		err = rowsGauge.Scan(&gm.Name, &gm.Value)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Errorf("error scanning all gauges: %w", err)
 		}
 		pg.UpdateGauge(gm.Name, gm.Value)
 		gauges = append(gauges, gm)
 	}
-
-	//gauges := make([]storage.GaugeMetric, 0)
-	//var gauges []storage.GaugeMetric
-	//var gauges []storage.GaugeMetric
-	//ctx := context.Background()
-	//_, err := pg.DB.Exec(ctx, "SELECT name, value FROM gauge_metrics", &gauges)
-	//if err != nil {
-	//	return nil, nil
-	//}
-
-	//gauges = append(gauges, storage.GaugeMetric{Name: name, Value: value})
-	//err = raw.Scan(&gauges)
-	//if err != nil {
-	//	return nil, fmt.Errorf("error occured on scanning gauge: %w", err)
-	//}
-	//defer raw.Close()
-	//
-	//for raw.Next() {
-	//	var cm storage.GaugeMetric
-	//	err = raw.Scan(&cm.Name, &cm.Value)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("error occured on scanning gauge: %w", err)
-	//	}
-	//	//m := shared.NewEmptyGaugeMetric()
-	//	//if err := rows.Scan(&m.ID, m.Value); err != nil {
-	//	//	return nil, fmt.Errorf("error occured on scanning gauge: %w", err)
-	//	//}
-	//	gauges = append(gauges, cm)
-	//}
 
 	return gauges, nil
 }
@@ -189,10 +158,10 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	ctx := context.Background()
 	rowsCounter, err := pg.DB.Query(ctx, "SELECT name, value FROM counter_metrics;")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Errorf("error selecting all counter: %w", err)
 	}
 	if err := rowsCounter.Err(); err != nil {
-		fmt.Println(err)
+		fmt.Errorf("error selecting all counter: %w", err)
 	}
 	defer rowsCounter.Close()
 
@@ -200,7 +169,7 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 		var cm storage.CounterMetric
 		err = rowsCounter.Scan(&cm.Name, &cm.Value)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Errorf("error scanning all counter: %w", err)
 		}
 		pg.UpdateCounter(cm.Name, cm.Value)
 		counters = append(counters, cm)
@@ -216,29 +185,103 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (pg *Postgres) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
+func (pg *Postgres) batchUpdate(gauge []models.Metrics, counter []models.Metrics) error {
 	ctx := context.Background()
 	tx, err := pg.DB.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
 	}
 	defer tx.Rollback(ctx)
-	encoder := json.NewEncoder(w)
-	results := make([]models.Metrics, len(metrics))
+	gaugeQuery := `INSERT INTO gauge_metrics(name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2`
+	gaugebatch := &pgx.Batch{}
+	for _, v := range gauge {
+		gaugebatch.Queue(gaugeQuery, v.ID, v.Value)
+	}
+
+	err = pg.DB.SendBatch(ctx, gaugebatch).Close()
+	if err != nil {
+		return fmt.Errorf("error batch gauge update: %w", err)
+	}
+
+	counterQuery := `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + $2`
+	counterbatch := &pgx.Batch{}
+	for _, v := range counter {
+		counterbatch.Queue(counterQuery, v.ID, v.Delta)
+	}
+
+	err = pg.DB.SendBatch(ctx, counterbatch).Close()
+	if err != nil {
+		return fmt.Errorf("error batch counter update: %w", err)
+	}
+
+	return tx.Commit(ctx)
+
+	//
+	//
+	//
+	//
+	//encoder := json.NewEncoder(w)
+	//results := make([]models.Metrics, len(metrics))
+	//for _, v := range metrics {
+	//	switch v.MType {
+	//	case "gauge":
+	//		pg.UpdateGauge(v.ID, *v.Value)
+	//	case "counter":
+	//		val, _ := pg.UpdateCounter(v.ID, *v.Delta)
+	//		*v.Delta = val
+	//	}
+	//	results = append(results, v)
+	//}
+	//if err := encoder.Encode(results[0]); err != nil {
+	//	return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
+	//}
+	//return tx.Commit(ctx)
+	////encoder := json.NewEncoder(w)
+}
+
+func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
+	ctx := context.Background()
+	var gauge []models.Metrics
+	var counter []models.Metrics
+	//tx, err := pg.DB.BeginTx(ctx, pgx.TxOptions{})
+	//if err != nil {
+	//	return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
+	//}
+	//defer tx.Rollback(ctx)
+	//encoder := json.NewEncoder(w)
+	//results := make([]models.Metrics, len(metrics))
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			pg.UpdateGauge(v.ID, *v.Value)
+			gauge = append(gauge, v)
+		//	pg.UpdateGauge(v.ID, *v.Value)
 		case "counter":
-			val, _ := pg.UpdateCounter(v.ID, *v.Delta)
-			*v.Delta = val
+			counter = append(counter, v)
+			//val, _ := pg.UpdateCounter(v.ID, *v.Delta)
+			//*v.Delta = val
 		}
-		results = append(results, v)
+		//	results = append(results, v)
 	}
-	if err := encoder.Encode(results[0]); err != nil {
-		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
+
+	for i := 0; ; i++ {
+		err := pg.batchUpdate(gauge, counter)
+		if err == nil || i >= retry {
+			return err
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+			select {
+			case <-time.After(delays[i]):
+				continue
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+		return err
+		//if err := encoder.Encode(results[0]); err != nil {
+		//	return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
-	return tx.Commit(ctx)
 	//encoder := json.NewEncoder(w)
 }
 
