@@ -15,8 +15,6 @@ type Storage interface {
 	Ping() error
 	GetAllGauges() ([]GaugeMetric, error)
 	GetAllCounters() ([]CounterMetric, error)
-	//UpdateGauges(metrics []GaugeMetric) ([]GaugeMetric, error)
-	//UpdateCounters(metrics []CounterMetric) ([]CounterMetric, error)
 	BatchUpdate(metrics []models.Metrics) error
 }
 
@@ -28,9 +26,4 @@ type CounterMetric struct {
 type GaugeMetric struct {
 	Name  string  `json:"name"`
 	Value float64 `json:"value"`
-}
-
-type Metrics struct {
-	Gauges   []GaugeMetric
-	Counters []CounterMetric
 }

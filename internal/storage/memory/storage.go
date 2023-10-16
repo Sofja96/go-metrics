@@ -13,14 +13,6 @@ import (
 type Gauge float64
 type Counter int64
 
-//type Storage interface {
-//	UpdateCounter(name string, value int64)
-//	UpdateGauge(name string, value float64)
-//	AllMetrics() *AllMetrics
-//	GetCounterValue(id string) (int64, bool)
-//	GetGaugeValue(id string) (float64, bool)
-//}
-
 type MemStorage struct {
 	gaugeData   map[string]Gauge
 	counterData map[string]Counter
@@ -52,9 +44,6 @@ func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorag
 				return nil, fmt.Errorf("failed to restore data from file: %w", err)
 			}
 		}
-		//if err != nil {
-		//	return nil, err
-		//}
 	}
 
 	if storeInterval != 0 {
@@ -67,48 +56,17 @@ func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorag
 	}
 	return s, nil
 
-	//	return s
 }
-
-//func NewMemFileStorage (storeInterval int, filePath string, restore bool) (storage.Storage, error) {
-//	var metrics FileStorage.
-//}
 
 func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
 	s.counterData[name] += Counter(value)
 	return value, nil
 }
 
-//func (s *MemStorage) UpdateCounters(metrics []storage.CounterMetric) ([]storage.CounterMetric, error) {
-//	for _, v := range metrics {
-//		s.counterData[v.Name] += Counter(v.Value)
-//		//switch v.MType {
-//		//case "gauge":
-//		//	s.UpdateGauge(v.ID, *v.Value)
-//		//case "counter":
-//		//	s.UpdateCounter(v.ID, *v.Delta)
-//
-//	}
-//	return metrics, nil
-//}
-
 func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
 	s.gaugeData[name] = Gauge(value)
 	return value, nil
 }
-
-//func (s *MemStorage) UpdateGauges(metrics []storage.GaugeMetric) ([]storage.GaugeMetric, error) {
-//	for _, v := range metrics {
-//		s.gaugeData[v.Name] = Gauge(v.Value)
-//		//switch v.MType {
-//		//case "gauge":
-//		//	s.UpdateGauge(v.ID, *v.Value)
-//		//case "counter":
-//		//	s.UpdateCounter(v.ID, *v.Delta)
-//
-//	}
-//	return metrics, nil
-//}
 
 func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
 	_, ok := s.counterData[id]

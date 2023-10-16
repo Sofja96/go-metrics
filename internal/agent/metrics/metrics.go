@@ -10,10 +10,8 @@ var ValuesGauge = map[string]float64{}
 
 var ValuesCounter = map[string]int64{}
 
-//var PollCount uint64
-
 func GetMetrics() []models.Metrics {
-	//var metrics []models.Metrics
+
 	var rtm runtime.MemStats
 	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
@@ -48,8 +46,6 @@ func GetMetrics() []models.Metrics {
 	ValuesGauge["RandomValue"] = rand.Float64()
 
 	ValuesCounter["PollCount"]++
-
-	//PollCount += 1
 
 	return nil
 }
