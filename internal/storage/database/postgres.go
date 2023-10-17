@@ -11,9 +11,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
-	//"github.com/jackc/pgx/v5/pgxpool"
-	//"sync"
 )
 
 type Postgres struct {
@@ -33,7 +30,6 @@ func NewStorage(dsn string) (*Postgres, error) {
 
 	err = dbc.initDB(context.Background())
 	if err != nil {
-		log.Println(err)
 		return nil, fmt.Errorf("error init db: %w", err)
 	}
 	return dbc, nil
@@ -62,7 +58,6 @@ func (pg *Postgres) initDB(ctx context.Context) error {
 
 func (pg *Postgres) GetGaugeValue(id string) (float64, bool) {
 	ctx := context.Background()
-	//ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	raw := pg.DB.QueryRow(ctx, "SELECT value FROM gauge_metrics WHERE name = $1", id)
 	var gm storage.GaugeMetric
 	err := raw.Scan(&gm.Value)
@@ -93,7 +88,6 @@ func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
 
 func (pg *Postgres) GetCounterValue(id string) (int64, bool) {
 	ctx := context.Background()
-	//ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	raw := pg.DB.QueryRow(ctx, "SELECT value FROM counter_metrics WHERE name = $1", id)
 	var cm storage.CounterMetric
 	err := raw.Scan(&cm.Value)

@@ -141,23 +141,22 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")
-		gaugesMetric, err := storage.GetAllGauges()
+		gaugeMetrics, err := storage.GetAllGauges()
 		if err != nil {
 			return ctx.String(http.StatusInternalServerError, "")
 		}
-		counterMetric, err := storage.GetAllCounters()
+		counterMetrics, err := storage.GetAllCounters()
 		if err != nil {
 			return ctx.String(http.StatusInternalServerError, "")
 		}
-		//	m := storage.AllMetrics()
 		var result string
 
 		result += "Gauge metrics:\n"
-		for _, metric := range gaugesMetric {
+		for _, metric := range gaugeMetrics {
 			result += fmt.Sprintf("- %s = %.2f\n", metric.Name, metric.Value)
 		}
 		result += "Counter metrics:\n"
-		for _, metric := range counterMetric {
+		for _, metric := range counterMetrics {
 			result += fmt.Sprintf("- %s = %d\n", metric.Name, metric.Value)
 		}
 		err = ctx.String(http.StatusOK, result)

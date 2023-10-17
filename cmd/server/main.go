@@ -4,6 +4,7 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/handlers"
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
+	"github.com/Sofja96/go-metrics.git/internal/storage/database"
 	"github.com/Sofja96/go-metrics.git/internal/storage/memory"
 	"log"
 )
@@ -19,7 +20,7 @@ func main() {
 			log.Print(err)
 		}
 	} else {
-		store, err = memory.NewPostgresqlStorage(c.DatabaseDSN)
+		store, err = database.NewStorage(c.DatabaseDSN)
 	}
 	if err != nil {
 		log.Print(err)

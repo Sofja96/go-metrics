@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
-	"github.com/Sofja96/go-metrics.git/internal/storage/database"
 	"io"
 	"log"
 	"os"
@@ -18,7 +17,6 @@ type Counter int64
 type MemStorage struct {
 	gaugeData   map[string]Gauge
 	counterData map[string]Counter
-	//FileStorage *FileStorage
 }
 
 func (s *MemStorage) Ping() error {
@@ -27,10 +25,6 @@ func (s *MemStorage) Ping() error {
 
 func NewInMemStorage(storeInterval int, filePath string, restore bool) (storage.Storage, error) {
 	return NewMemStorage(storeInterval, filePath, restore)
-}
-
-func NewPostgresqlStorage(dsn string) (storage.Storage, error) {
-	return database.NewStorage(dsn)
 }
 
 func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorage, error) {
