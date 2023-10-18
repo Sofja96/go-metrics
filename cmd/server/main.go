@@ -4,32 +4,31 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/handlers"
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
+	"github.com/Sofja96/go-metrics.git/internal/storage/database"
+	"github.com/Sofja96/go-metrics.git/internal/storage/memory"
 	"log"
 )
 
 func main() {
 	c := config.LoadConfig()
 	config.ParseFlags(c)
-	s := storage.NewMemStorage(c.StoreInterval, c.FilePath, c.Restore)
-	if c.FilePath != "" {
-		if c.Restore {
-			err := storage.LoadStorageFromFile(s, c.FilePath)
-			if err != nil {
-				log.Print(err)
-			}
+	var store storage.Storage
+	var err error
+	if len(c.DatabaseDSN) == 0 {
+		store, err = memory.NewInMemStorage(c.StoreInterval, c.FilePath, c.Restore)
+		if err != nil {
+			log.Print(err)
 		}
-		if c.StoreInterval != 0 {
-			go func() {
-				err := storage.Dump(s, c.FilePath, c.StoreInterval)
-				if err != nil {
-					log.Print(err)
-				}
-			}()
-		}
+	} else {
+		store, err = database.NewStorage(c.DatabaseDSN)
 	}
-	e := handlers.CreateServer(s)
+	if err != nil {
+		log.Print(err)
+	}
+
+	e := handlers.CreateServer(store)
 	log.Println("Running server on", c.Address)
-	err := e.Start(c.Address)
+	err = e.Start(c.Address)
 	if err != nil {
 		log.Fatal(err)
 	}

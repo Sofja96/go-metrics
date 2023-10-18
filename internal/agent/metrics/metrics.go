@@ -1,14 +1,17 @@
 package metrics
 
 import (
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"math/rand"
 	"runtime"
 )
 
 var ValuesGauge = map[string]float64{}
 
-var PollCount uint64
+var ValuesCounter = map[string]int64{}
 
-func GetMetrics() {
+func GetMetrics() []models.Metrics {
+
 	var rtm runtime.MemStats
 	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
@@ -40,6 +43,9 @@ func GetMetrics() {
 	ValuesGauge["Sys"] = float64(rtm.Sys)
 	ValuesGauge["TotalAlloc"] = float64(rtm.TotalAlloc)
 	ValuesGauge["GCSys"] = float64(rtm.GCSys)
+	ValuesGauge["RandomValue"] = rand.Float64()
 
-	PollCount += 1
+	ValuesCounter["PollCount"]++
+
+	return nil
 }

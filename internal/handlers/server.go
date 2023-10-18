@@ -7,22 +7,23 @@ import (
 	"go.uber.org/zap"
 )
 
-func CreateServer(s *storage.MemStorage) *echo.Echo {
+func CreateServer(s storage.Storage) *echo.Echo {
 	var sugar zap.SugaredLogger
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Sync()
-
 	sugar = *logger.Sugar()
 	e := echo.New()
 	e.Use(middleware.WithLogging(sugar))
 	e.Use(middleware.GzipMiddleware())
 	e.POST("/update/", UpdateJSON(s))
+	e.POST("/updates/", UpdatesBatch(s))
 	e.POST("/value/", ValueJSON(s))
-	e.GET("/", AllMetrics(s))
+	e.GET("/", GetAllMetrics(s))
 	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
+	e.GET("/ping", Ping(s))
 	return e
 }

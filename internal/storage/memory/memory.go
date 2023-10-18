@@ -1,8 +1,8 @@
-package storage
+package memory
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"path"
 	"time"
 
@@ -28,7 +28,7 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, 0666)
 		if err != nil {
-			log.Print(err)
+			return fmt.Errorf("error create or read file: %w", err)
 		}
 	}
 	pollTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
@@ -36,7 +36,7 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	for range pollTicker.C {
 		err := saveStorageToFile(s, filePath)
 		if err != nil {
-			log.Print(err)
+			return fmt.Errorf("error save data in file: %w", err)
 		}
 	}
 	return nil
@@ -45,12 +45,12 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 func LoadStorageFromFile(s *MemStorage, filePath string) error {
 	file, err := os.ReadFile(filePath)
 	if err != nil {
-		log.Print(err)
+		return fmt.Errorf("error read and load data from file: %w", err)
 	}
 
 	var data AllMetrics
 	if err := json.Unmarshal(file, &data); err != nil {
-		log.Print(err)
+		return fmt.Errorf("error on restoring file: %w", err)
 	}
 
 	if len(data.Counter) != 0 {

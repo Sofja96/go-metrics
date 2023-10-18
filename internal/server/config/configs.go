@@ -5,6 +5,7 @@ type Config struct {
 	StoreInterval int    `env:"STORE_INTERVAL"`
 	FilePath      string `env:"FILE_STORAGE_PATH"`
 	Restore       bool   `env:"RESTORE"`
+	DatabaseDSN   string `env:"DATABASE_DSN"`
 }
 
 func LoadConfig() *Config {

@@ -54,9 +54,27 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		default:
 			return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
 		}
-
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		return ctx.JSON(http.StatusOK, metric)
+	}
+}
+
+func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		var metrics []models.Metrics
+		err := json.NewDecoder(ctx.Request().Body).Decode(&metrics)
+		if err != nil {
+			return ctx.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+		}
+		if len(metrics) == 0 {
+			return ctx.String(http.StatusBadRequest, "metric is empty")
+		}
+		err = s.BatchUpdate(ctx.Response().Writer, metrics)
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, "")
+		}
+		ctx.Response().Header().Set("Content-Type", "application/json")
+		return ctx.String(http.StatusOK, "")
 	}
 }
 
@@ -120,24 +138,48 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 	}
 }
 
-func AllMetrics(storage storage.Storage) echo.HandlerFunc {
+func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")
-		m := storage.AllMetrics()
-		result := "Gauge metrics:\n"
-		for name, value := range m.Gauge {
-			result += fmt.Sprintf("- %s = %f\n", name, value)
-		}
-
-		result += "Counter metrics:\n"
-		for name, value := range m.Counter {
-			result += fmt.Sprintf("- %s = %d\n", name, value)
-		}
-		err := ctx.String(http.StatusOK, result)
+		gaugeMetrics, err := storage.GetAllGauges()
 		if err != nil {
-			return err
+			return ctx.String(http.StatusInternalServerError, "")
+		}
+		counterMetrics, err := storage.GetAllCounters()
+		if err != nil {
+			return ctx.String(http.StatusInternalServerError, "")
+		}
+		var result string
+
+		result += "Gauge metrics:\n"
+		for _, metric := range gaugeMetrics {
+			result += fmt.Sprintf("- %s = %.2f\n", metric.Name, metric.Value)
+		}
+		result += "Counter metrics:\n"
+		for _, metric := range counterMetrics {
+			result += fmt.Sprintf("- %s = %d\n", metric.Name, metric.Value)
+		}
+		err = ctx.String(http.StatusOK, result)
+		if err != nil {
+			return fmt.Errorf("error get all metrics: %w", err)
 		}
 
+		return nil
+	}
+}
+
+func Ping(storage storage.Storage) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("Content-Type", "text/html")
+		err := storage.Ping()
+		if err == nil {
+			ctx.String(http.StatusOK, "Connection database is OK")
+		} else {
+			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
+		}
+		if err != nil {
+			return fmt.Errorf("error connection db: %w", err)
+		}
 		return nil
 	}
 }
