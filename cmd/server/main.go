@@ -26,7 +26,7 @@ func main() {
 		log.Print(err)
 	}
 
-	e := handlers.CreateServer(store)
+	e := handlers.CreateServer(c, store)
 	log.Println("Running server on", c.Address)
 	err = e.Start(c.Address)
 	if err != nil {

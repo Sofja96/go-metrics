@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
+	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
 	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/hashicorp/go-retryablehttp"
@@ -36,15 +37,20 @@ func PostQueries(cfg *envs.Config) {
 	for k, v := range metrics.ValuesCounter {
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
 	}
-	postBatch(retryClient, url, allMetrics)
+	postBatch(retryClient, url, cfg.HashKey, allMetrics)
 }
 
-func postBatch(r *retryablehttp.Client, url string, m []models.Metrics) error {
+func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metrics) error {
 	gz, err := compress(m)
 	if err != nil {
 		return fmt.Errorf("error on compressing metrics on request: %w", err)
 	}
-	req, err := retryablehttp.NewRequest("POST", url, gz)
+	hashedMetrics, err := hash.ComputeHmac256([]byte(key), gz)
+	if err != nil {
+		return fmt.Errorf("error calculating hmac: %w", err)
+	}
+	fmt.Println(string(gz), hashedMetrics)
+	req, err := retryablehttp.NewRequest("POST", url, hashedMetrics)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
 	}
@@ -52,6 +58,10 @@ func postBatch(r *retryablehttp.Client, url string, m []models.Metrics) error {
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
+	if len(key) != 0 {
+		req.Header.Add("HashSHA256", hashedMetrics)
+	}
+	//req.Header.Set("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
 	resp, err := r.Do(req)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)

@@ -10,6 +10,7 @@ func RunParameters(cfg *Config) error {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "address and port to run server")
 	flag.IntVar(&cfg.ReportInterval, "r", 10, "frequency of sending metrics to the server")
 	flag.IntVar(&cfg.PollInterval, "p", 2, "frequency of polling metrics")
+	flag.StringVar(&cfg.HashKey, "k", "", "key for hash")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
@@ -20,6 +21,9 @@ func RunParameters(cfg *Config) error {
 	}
 	if envRunAddr := os.Getenv("POLL_INTERVAL"); envRunAddr != "" {
 		cfg.PollInterval, _ = strconv.Atoi(envRunAddr)
+	}
+	if envRunAddr := os.Getenv("KEY"); envRunAddr != "" {
+		cfg.HashKey = envRunAddr
 	}
 
 	return nil
