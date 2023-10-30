@@ -134,7 +134,7 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 		if c.Request().Header.Get("Content-Type") != "application/json" {
 			return c.String(http.StatusUnsupportedMediaType, "")
 		}
-		return c.JSON(http.StatusOK, "")
+		return c.JSON(http.StatusOK, metric)
 	}
 }
 
