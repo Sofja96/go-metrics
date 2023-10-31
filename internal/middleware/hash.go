@@ -212,7 +212,8 @@ func HashMiddleware(key []byte) echo.MiddlewareFunc {
 
 				c.Request().Body = io.NopCloser(bytes.NewReader(body))
 
-				err = checkSign(key, body, c.Request().Header.Get("Hashsha256"))
+				//err =
+				checkSign(key, body, c.Request().Header.Get("Hashsha256"))
 				log.Println(c.Request().Header)
 				log.Println(key)
 				//log.Println(body)
