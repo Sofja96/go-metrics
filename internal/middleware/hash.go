@@ -13,7 +13,7 @@ import (
 )
 
 type hashedWriter struct {
-	w  http.ResponseWriter
+	http.ResponseWriter
 	mw io.Writer
 	b  *bytes.Buffer
 	k  []byte
@@ -25,16 +25,8 @@ func newHashedWriter(w http.ResponseWriter, key []byte) *hashedWriter {
 	return &hashedWriter{w, mw, b, key}
 }
 
-func (h *hashedWriter) Header() http.Header {
-	return h.w.Header()
-}
-
 func (h *hashedWriter) Write(data []byte) (int, error) {
 	return h.mw.Write(data)
-}
-
-func (h *hashedWriter) WriteHeader(statusCode int) {
-	h.w.WriteHeader(statusCode)
 }
 
 func (h *hashedWriter) hash() string {
@@ -59,7 +51,10 @@ func ComputeHmac256(key []byte, data []byte) string {
 
 func checkSign(key []byte, body []byte, hash string) error {
 	clientHash := ComputeHmac256(key, body)
+	println(key, body)
 	if clientHash != hash {
+		println("hash", hash)
+		println("clinet", clientHash)
 		return fmt.Errorf("hashes are not equal")
 	}
 	return nil
@@ -97,56 +92,107 @@ func checkSign(key []byte, body []byte, hash string) error {
 //	return nil
 //}
 
+//func HashMacMiddleware(key []byte) echo.MiddlewareFunc {
+//	return func(next echo.HandlerFunc) echo.HandlerFunc {
+//		return func(c echo.Context) (err error) {
+//			clienthash := c.Request().Header.Get("Hashsha256")
+//			log.Println(clienthash, c.Request().Header)
+//			req := c.Request()
+//			//rw := c.Response().Writer
+//			reqBody := req.Body
+//			bodyBytes, err := io.ReadAll(reqBody)
+//			if err != nil {
+//				log.Println(bodyBytes, "body")
+//				return c.String(http.StatusInternalServerError, "hashes are empty")
+//			}
+//
+//			err = checkSign(key, bodyBytes, clienthash)
+//			if err != nil {
+//				log.Println(req.Header)
+//				return c.String(http.StatusBadRequest, "hashes are not equal")
+//			}
+//			log.Println(req.Header)
+//
+//			//if len(key) != 0 {
+//			//
+//			//}
+//			respSign := ComputeHmac256(key, bodyBytes)
+//			c.Response().Header().Set("HashSHA256", respSign)
+//			log.Println(respSign, "respsign")
+//			log.Println(c.Response().Header(), "header_response")
+//
+//			//err = checkSign(key, bodyBytes, respSign)
+//			//if err != nil {
+//			//	log.Println(req.Header)
+//			//	return c.String(http.StatusBadRequest, "hashes are not equal")
+//			//}
+//			//log.Println(req.Header)
+//
+//			//hashedWriter := newHashedWriter(rw, key)
+//			//hash := hashedWriter.hash()
+//			//log.Println(hash, "hash")
+//			//if err != nil {
+//			//	return c.String(http.StatusInternalServerError, "hashes are not equal")
+//			//}
+//			//hashedWriter.Header().Set("HashSHA256", hash)
+//			//log.Println(hashedWriter, "hashedWriter")
+//			//log.Println(hash)
+//			if err = next(c); err != nil {
+//				c.Error(err)
+//			}
+//
+//			return err
+//		}
+//	}
+//
+//}
+
 func HashMacMiddleware(key []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
 			clienthash := c.Request().Header.Get("Hashsha256")
 			log.Println(clienthash, c.Request().Header)
-			req := c.Request()
-			//rw := c.Response().Writer
-			reqBody := req.Body
-			bodyBytes, err := io.ReadAll(reqBody)
+			bodyBytes, err := io.ReadAll(c.Request().Body)
+			log.Println(c.Request().ContentLength)
+			c.Request().Body.Close()
+			log.Println(bodyBytes, "body")
 			if err != nil {
-				log.Println(bodyBytes, "body")
 				return c.String(http.StatusInternalServerError, "hashes are empty")
 			}
 
-			err = checkSign(key, bodyBytes, clienthash)
-			if err != nil {
-				log.Println(req.Header)
-				return c.String(http.StatusBadRequest, "hashes are not equal")
-			}
-			log.Println(req.Header)
+			cr := io.NopCloser(bytes.NewReader(bodyBytes))
 
-			//if len(key) != 0 {
-			//
+			c.Request().Body = cr
+			defer cr.Close()
+			//log.Println(cr, "body1")
+
+			ComputeHmac256(key, bodyBytes)
+			//log.Println(key, "key+body")
+			log.Println(ComputeHmac256(key, bodyBytes), "compute")
+
+			err = checkSign(key, bodyBytes, c.Request().Header.Get("Hashsha256"))
+			log.Println(key, c.Request().Header.Get("Hashsha256"), "check")
+			log.Println(c.Request().Header)
+			log.Println(key)
+			//if err != nil {
+			//	return c.String(http.StatusBadRequest, "hashes are not equal")
 			//}
+
+			//log.Println(c.Request().Header)
+			//hashedWriter := newHashedWriter(c.Response(), key)
+			//
+			//hash := hashedWriter.hash()
+			//log.Println(hash, "hash")
+			//hashedWriter.Header().Set("HashSHA256", hash)
+			//log.Println(hashedWriter, "hashWriter")
+			//log.Println(c.Request().Header)
+
 			respSign := ComputeHmac256(key, bodyBytes)
 			c.Response().Header().Set("HashSHA256", respSign)
 			log.Println(respSign, "respsign")
 			log.Println(c.Response().Header(), "header_response")
 
-			//err = checkSign(key, bodyBytes, respSign)
-			//if err != nil {
-			//	log.Println(req.Header)
-			//	return c.String(http.StatusBadRequest, "hashes are not equal")
-			//}
-			//log.Println(req.Header)
-
-			//hashedWriter := newHashedWriter(rw, key)
-			//hash := hashedWriter.hash()
-			//log.Println(hash, "hash")
-			//if err != nil {
-			//	return c.String(http.StatusInternalServerError, "hashes are not equal")
-			//}
-			//hashedWriter.Header().Set("HashSHA256", hash)
-			//log.Println(hashedWriter, "hashedWriter")
-			//log.Println(hash)
-			if err = next(c); err != nil {
-				c.Error(err)
-			}
-
-			return err
+			return next(c)
 		}
 	}
 

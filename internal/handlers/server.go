@@ -69,7 +69,7 @@ func New() *APIServer {
 	a.echo.Use(middleware.GzipMiddleware())
 	if len(key) != 0 {
 		log.Println(key, "key")
-		a.echo.Use(middleware.HashMiddleware([]byte(key)))
+		a.echo.Use(middleware.HashMacMiddleware([]byte(key)))
 	}
 
 	a.echo.POST("/update/", UpdateJSON(store))

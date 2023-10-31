@@ -29,6 +29,7 @@ func main() {
 			fmt.Println(string(b))
 		case <-reportTicker.C:
 			export.PostQueries(cfg)
+			export.PostQueriesMetrics(cfg)
 		}
 	}
 }
