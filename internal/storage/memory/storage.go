@@ -124,9 +124,8 @@ func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 
 		}
 	}
-	metricStab := models.Metrics{}
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(metricStab); err != nil {
+	if err := encoder.Encode(metrics[0]); err != nil {
 		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
 	return nil

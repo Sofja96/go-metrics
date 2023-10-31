@@ -164,8 +164,7 @@ func (pg *Postgres) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 		}
 		results = append(results, v)
 	}
-	metricStab := models.Metrics{}
-	if err := encoder.Encode(metricStab); err != nil {
+	if err := encoder.Encode(results[0]); err != nil {
 		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
 	return tx.Commit(ctx)
