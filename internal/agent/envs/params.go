@@ -11,6 +11,7 @@ func RunParameters(cfg *Config) error {
 	flag.IntVar(&cfg.ReportInterval, "r", 10, "frequency of sending metrics to the server")
 	flag.IntVar(&cfg.PollInterval, "p", 2, "frequency of polling metrics")
 	flag.StringVar(&cfg.HashKey, "k", "", "key for hash")
+	flag.IntVar(&cfg.RateLimit, "l", 1, "Rate Limit")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
@@ -24,6 +25,12 @@ func RunParameters(cfg *Config) error {
 	}
 	if envRunAddr := os.Getenv("KEY"); envRunAddr != "" {
 		cfg.HashKey = envRunAddr
+	}
+	if envRunAddr := os.Getenv("RATE_LIMIT"); envRunAddr != "" {
+		cfg.RateLimit, _ = strconv.Atoi(envRunAddr)
+	}
+	if cfg.RateLimit <= 0 {
+		cfg.RateLimit = 1
 	}
 
 	return nil

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -21,10 +22,11 @@ const (
 	retryWaitMax time.Duration = time.Second * 5
 )
 
-func PostQueries(cfg *envs.Config) {
+func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, chOutResult chan<- error) {
 	metrics.GetMetrics()
 	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
 	log.Println("Running agent on", cfg.Address)
+	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = retryMax
@@ -37,7 +39,12 @@ func PostQueries(cfg *envs.Config) {
 	for k, v := range metrics.ValuesCounter {
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
 	}
-	postBatch(retryClient, url, cfg.HashKey, allMetrics)
+	//for allMetrics := range chIn {
+	err := postBatch(retryClient, url, cfg.HashKey, allMetrics)
+	if err != nil {
+		chOutResult <- fmt.Errorf("end metric error:, %w", err)
+	}
+	//}
 }
 
 func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metrics) error {

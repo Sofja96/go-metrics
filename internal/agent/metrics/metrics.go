@@ -2,6 +2,8 @@ package metrics
 
 import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
 )
@@ -48,4 +50,17 @@ func GetMetrics() []models.Metrics {
 	ValuesCounter["PollCount"]++
 
 	return nil
+}
+
+func GetPSMetrics() []models.Metrics {
+	v, _ := mem.VirtualMemory()
+
+	ValuesGauge["TotalMemory"] = float64(v.Total)
+	ValuesGauge["FreeMemory"] = float64(v.Free)
+	cpu, _ := cpu.Percent(0, true)
+
+	ValuesGauge["CPUutilization1"] = float64(cpu[0])
+
+	return nil
+
 }
