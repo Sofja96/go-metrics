@@ -12,12 +12,9 @@ import (
 )
 
 type APIServer struct {
-	//storage *storage.MemStorage
 	echo    *echo.Echo
 	address string
 	logger  zap.SugaredLogger
-	//config  *config.Config
-	//db      *database.Postgres
 }
 
 func New() *APIServer {
@@ -46,32 +43,16 @@ func New() *APIServer {
 		panic(err)
 	}
 	defer logger.Sync()
-	//e := echo.New()
-	//e.Use(middleware.WithLogging(a.logger))
-	//e.Use(middleware.GzipMiddleware())
-	//e.POST("/update/", UpdateJSON(store))
-	//e.POST("/updates/", UpdatesBatch(store))
-	//e.POST("/value/", ValueJSON(store))
-	//e.GET("/", GetAllMetrics(store))
-	//e.GET("/value/:typeM/:nameM", ValueMetric(store))
-	//e.POST("/update/:typeM/:nameM/:valueM", Webhook(store))
-	//e.GET("/ping", Ping(store))
-	//if len(c.HashKey) != 0 {
-	//	log.Println(c.HashKey)
-	//	e.Use(middleware.HashMacMiddleware([]byte(c.HashKey)))
-	//}
 	key := c.HashKey
 	a.logger = *logger.Sugar()
 	a.echo.Use(middleware.WithLogging(a.logger))
-	//	a.echo.Use(middleware.HashMiddleware([]byte(key)))
 	log.Println(key)
 	log.Println([]byte(key))
-	a.echo.Use(middleware.GzipMiddleware())
 	if len(key) != 0 {
 		log.Println(key, "key")
 		a.echo.Use(middleware.HashMacMiddleware([]byte(key)))
 	}
-
+	a.echo.Use(middleware.GzipMiddleware())
 	a.echo.POST("/update/", UpdateJSON(store))
 	a.echo.POST("/updates/", UpdatesBatch(store))
 	a.echo.POST("/value/", ValueJSON(store))
@@ -80,17 +61,10 @@ func New() *APIServer {
 	a.echo.POST("/update/:typeM/:nameM/:valueM", Webhook(store))
 	a.echo.GET("/ping", Ping(store))
 	log.Println(c.HashKey, "key")
-	//a.echo.Use(middleware.HashMacMiddleware([]byte(c.HashKey)))
-	//if len(key) != 0 {
-	//	log.Println(key, "key")
-	//a.echo.Use(middleware.HashMiddleware([]byte(key)))
-	//}
-
 	return a
 }
 
 func (a *APIServer) Start() error {
-	//e := echo.New()
 	err := a.echo.Start(a.address)
 	if err != nil {
 		log.Fatal(err)
@@ -101,11 +75,7 @@ func (a *APIServer) Start() error {
 }
 
 func CreateServer(s storage.Storage) *echo.Echo {
-	//	c := config.LoadConfig()
 	var sugar zap.SugaredLogger
-	//var key string
-	//key := config.LoadConfig().HashKey
-	//log.Println(key)
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
@@ -122,41 +92,5 @@ func CreateServer(s storage.Storage) *echo.Echo {
 	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
 	e.GET("/ping", Ping(s))
-	//log.Println(key)
-	//e.Use(middleware.HashMacMiddleware([]byte(key)))
-	//e.Use(middleware.HashMacMiddleware(([]byte(key))))
-	//if len(key) != 0 {
-	//	log.Println(key)
-	//	e.Use(middleware.HashMacMiddleware(key))
-	//}
-	//e.Use(middleware.HashMacMiddleware())
-	//if len(c.HashKey) > 0 {
-	//	e.Use(middleware.HashMacMiddleware([]byte(c.HashKey)))
-	//}
 	return e
 }
-
-//func CreateServerHash(s storage.Storage, key string) *echo.Echo {
-//	var sugar zap.SugaredLogger
-//	//var key string
-//	logger, err := zap.NewDevelopment()
-//	if err != nil {
-//		panic(err)
-//	}
-//	defer logger.Sync()
-//	sugar = *logger.Sugar()
-//	e := echo.New()
-//	e.Use(middleware.WithLogging(sugar))
-//	e.Use(middleware.GzipMiddleware())
-//	if len(key) > 0 {
-//		e.Use(middleware.HashMacMiddleware([]byte(key)))
-//	}
-//	e.POST("/update/", UpdateJSON(s))
-//	e.POST("/updates/", UpdatesBatch(s))
-//	e.POST("/value/", ValueJSON(s))
-//	e.GET("/", GetAllMetrics(s))
-//	e.GET("/value/:typeM/:nameM", ValueMetric(s))
-//	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
-//	e.GET("/ping", Ping(s))
-//	return e
-//}

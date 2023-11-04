@@ -38,7 +38,6 @@ func PostQueries(cfg *envs.Config) {
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
 	}
 	postBatch(retryClient, url, cfg.HashKey, allMetrics)
-	log.Println(cfg.HashKey)
 }
 
 func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metrics) error {
@@ -46,34 +45,16 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metri
 	if err != nil {
 		return fmt.Errorf("error on compressing metrics on request: %w", err)
 	}
-	//hashedMetrics, err := hash.ComputeHmac256([]byte(key), gz)
-	//if err != nil {
-	//	return fmt.Errorf("error calculating hmac: %w", err)
-	//}
-	fmt.Println(hash.ComputeHmac256([]byte(key), gz))
-	req, err := retryablehttp.NewRequest("POST", url, bytes.NewReader(gz))
+	req, err := retryablehttp.NewRequest("POST", url, gz)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
 	}
-
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
-	//req.Header.Add("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
-	//req.Header.Set("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
-	//req.Header.Set("HashSHA256", hashedMetrics)
 	if len(key) != 0 {
 		req.Header.Set("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
-		log.Println(hash.ComputeHmac256([]byte(key), gz), "compute")
-		log.Println([]byte(key), key)
-		log.Println(gz, "gz")
-		log.Println(m, "m")
 	}
-	//req.SetBody(hashedMetrics)
-	//req.SetBody(gz)
-	//req = req.
-	fmt.Println(req.Header)
-	//req.Header.Set("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
 	resp, err := r.Do(req)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
@@ -82,9 +63,6 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metri
 	log.Println(resp.StatusCode)
 	log.Println(resp.Header)
 	log.Println(resp.Body)
-	log.Println(resp.ContentLength, "resp")
-	log.Println(req.ContentLength, "req")
-	log.Println()
 
 	return nil
 }
