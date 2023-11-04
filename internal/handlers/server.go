@@ -57,7 +57,6 @@ func New() *APIServer {
 	a.echo.GET("/value/:typeM/:nameM", ValueMetric(store))
 	a.echo.POST("/update/:typeM/:nameM/:valueM", Webhook(store))
 	a.echo.GET("/ping", Ping(store))
-	log.Println(c.HashKey, "key")
 	return a
 }
 
