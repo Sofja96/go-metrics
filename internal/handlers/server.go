@@ -46,10 +46,7 @@ func New() *APIServer {
 	key := c.HashKey
 	a.logger = *logger.Sugar()
 	a.echo.Use(middleware.WithLogging(a.logger))
-	log.Println(key)
-	log.Println([]byte(key))
 	if len(key) != 0 {
-		log.Println(key, "key")
 		a.echo.Use(middleware.HashMacMiddleware([]byte(key)))
 	}
 	a.echo.Use(middleware.GzipMiddleware())

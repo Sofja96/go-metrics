@@ -42,7 +42,6 @@ func ComputeHmac256(key []byte, data []byte) string {
 
 func checkSign(key []byte, body []byte, hash string) error {
 	clientHash := ComputeHmac256(key, body)
-	println(key, body)
 	if clientHash != hash {
 		return fmt.Errorf("hashes are not equal")
 	}
@@ -52,17 +51,19 @@ func checkSign(key []byte, body []byte, hash string) error {
 func HashMacMiddleware(key []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
-			clienthash := c.Request().Header.Get("Hashsha256")
-			bodyBytes, err := io.ReadAll(c.Request().Body)
-			if err != nil {
-				return c.String(http.StatusInternalServerError, "hashes are empty")
-			}
+			if _, ok := c.Request().Header["Hashsha256"]; ok {
+				bodyBytes, err := io.ReadAll(c.Request().Body)
+				if err != nil {
+					return c.String(http.StatusInternalServerError, "hashes are empty")
+				}
 
-			c.Request().Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				c.Request().Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
-			err = checkSign(key, bodyBytes, clienthash)
-			if err != nil {
-				return c.String(http.StatusBadRequest, "hashes are not equal")
+				err = checkSign(key, bodyBytes, c.Request().Header.Get("Hashsha256"))
+				if err != nil {
+					return c.String(http.StatusBadRequest, "hashes are not equal")
+				}
+
 			}
 
 			hashedWriter := newHashedWriter(c.Response(), key)
