@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -22,7 +23,7 @@ const (
 	retryWaitMax time.Duration = time.Second * 5
 )
 
-func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, chOutResult chan<- error) {
+func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, wg *sync.WaitGroup) {
 	metrics.GetMetrics()
 	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
 	log.Println("Running agent on", cfg.Address)
@@ -39,20 +40,16 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, c
 	for k, v := range metrics.ValuesCounter {
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
 	}
-	//for allMetrics := range chIn {
-	err := postBatch(retryClient, url, cfg.HashKey, allMetrics)
+	gz, err := compress(allMetrics)
+	err = postBatch(retryClient, url, cfg.HashKey, gz)
 	if err != nil {
-		chOutResult <- fmt.Errorf("end metric error:, %w", err)
+		fmt.Errorf("end metric error:, %w", err)
 	}
-	//}
+	wg.Done() // decrement counter
 }
 
-func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metrics) error {
-	gz, err := compress(m)
-	if err != nil {
-		return fmt.Errorf("error on compressing metrics on request: %w", err)
-	}
-	req, err := retryablehttp.NewRequest("POST", url, gz)
+func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error {
+	req, err := retryablehttp.NewRequest("POST", url, m)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
 	}
@@ -60,7 +57,11 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []models.Metri
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
 	if len(key) != 0 {
-		req.Header.Set("HashSHA256", hash.ComputeHmac256([]byte(key), gz))
+		hmac, err := hash.ComputeHmac256([]byte(key), m)
+		if err != nil {
+			return fmt.Errorf("error compute hash data: %w", err)
+		}
+		req.Header.Add("HashSHA256", hmac)
 	}
 	resp, err := r.Do(req)
 	if err != nil {

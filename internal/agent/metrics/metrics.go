@@ -52,8 +52,11 @@ func GetMetrics() []models.Metrics {
 	return nil
 }
 
-func GetPSMetrics() []models.Metrics {
-	v, _ := mem.VirtualMemory()
+func GetPSMetrics() ([]models.Metrics, error) {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		return nil, err
+	}
 
 	ValuesGauge["TotalMemory"] = float64(v.Total)
 	ValuesGauge["FreeMemory"] = float64(v.Free)
@@ -61,6 +64,6 @@ func GetPSMetrics() []models.Metrics {
 
 	ValuesGauge["CPUutilization1"] = float64(cpu[0])
 
-	return nil
+	return nil, nil
 
 }
