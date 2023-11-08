@@ -60,6 +60,7 @@ func startTask(taskChan chan []models.Metrics) {
 		case <-taskChan:
 			return
 		default:
+			log.Println("Задача выполняется...")
 		}
 	}
 }
