@@ -40,11 +40,8 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 	for k, v := range metrics.ValuesCounter {
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
 	}
-	gz, err := compress(allMetrics)
-	err = postBatch(retryClient, url, cfg.HashKey, gz)
-	if err != nil {
-		fmt.Errorf("end metric error:, %w", err)
-	}
+	gz, _ := compress(allMetrics)
+	postBatch(retryClient, url, cfg.HashKey, gz)
 	wg.Done() // decrement counter
 }
 
