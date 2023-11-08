@@ -1,8 +1,6 @@
 package agent
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/export"
 	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
@@ -17,8 +15,6 @@ func getMetrics(c chan<- []models.Metrics) {
 	PsMetrics, _ := metrics.GetPSMetrics()
 	c <- RnMetrics
 	c <- PsMetrics
-	b, _ := json.Marshal(metrics.ValuesGauge)
-	fmt.Println(string(b))
 }
 
 func Run() error {
@@ -26,7 +22,7 @@ func Run() error {
 	cfg := envs.LoadConfig()
 	err := envs.RunParameters(cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	chMetrics := make(chan []models.Metrics, cfg.RateLimit)
 	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
@@ -53,6 +49,17 @@ func Run() error {
 			log.Println("Report metrics stoped")
 		}()
 	}
+	go startTask(chMetrics)
 	wg.Wait()
 	return nil
+}
+
+func startTask(taskChan chan []models.Metrics) {
+	for {
+		select {
+		case <-taskChan:
+			return
+		default:
+		}
+	}
 }
