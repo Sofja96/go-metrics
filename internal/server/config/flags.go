@@ -16,6 +16,7 @@ func ParseFlags(s *Config) {
 	flag.IntVar(&s.StoreInterval, "i", 300, "interval for saving metrics on the server")
 	flag.BoolVar(&s.Restore, "r", true, "need to load data at startup")
 	flag.StringVar(&s.DatabaseDSN, "d", "", "connect to database")
+	flag.StringVar(&s.HashKey, "k", "", "key for hash")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
@@ -32,5 +33,8 @@ func ParseFlags(s *Config) {
 	}
 	if envRunAddr := os.Getenv("DATABASE_DSN"); envRunAddr != "" {
 		s.DatabaseDSN = envRunAddr
+	}
+	if envRunAddr := os.Getenv("KEY"); envRunAddr != "" {
+		s.HashKey = envRunAddr
 	}
 }
