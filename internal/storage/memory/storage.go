@@ -116,19 +116,38 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 }
 
 func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
+	updatedMetrics := make([]models.Metrics, 0, len(metrics))
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
 			s.UpdateGauge(v.ID, *v.Value)
+			updatedMetrics = append(updatedMetrics, models.Metrics{MType: "gauge", ID: v.ID, Value: v.Value})
 		case "counter":
-			s.UpdateCounter(v.ID, *v.Delta)
-
+			newValue, _ := s.UpdateCounter(v.ID, *v.Delta)
+			updatedMetrics = append(updatedMetrics, models.Metrics{MType: "counter", ID: v.ID, Delta: &newValue})
 		}
 	}
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(metrics); err != nil {
-		//if err := encoder.Encode(metrics[0]); err != nil {
-		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
+	if err := encoder.Encode(updatedMetrics); err != nil {
+		return fmt.Errorf("error occurred while encoding result of batch update: %w", err)
 	}
 	return nil
 }
+
+//func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
+//	for _, v := range metrics {
+//		switch v.MType {
+//		case "gauge":
+//			s.UpdateGauge(v.ID, *v.Value)
+//		case "counter":
+//			s.UpdateCounter(v.ID, *v.Delta)
+//
+//		}
+//	}
+//	encoder := json.NewEncoder(w)
+//	if err := encoder.Encode(metrics); err != nil {
+//		//if err := encoder.Encode(metrics[0]); err != nil {
+//		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
+//	}
+//	return nil
+//}
