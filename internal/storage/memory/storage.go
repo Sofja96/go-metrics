@@ -54,18 +54,9 @@ func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorag
 
 }
 
-//	UpdateCounter func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
-//		s.counterData[name] += Counter(value)
-//		return value, nil
-//	}
 func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
-	current, ok := s.counterData[name]
-	if !ok {
-		current = 0
-	}
-	newValue := current + Counter(value)
-	s.counterData[name] = newValue
-	return int64(newValue), nil
+	s.counterData[name] += Counter(value)
+	return value, nil
 }
 
 func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
@@ -126,23 +117,6 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 
 	return counters, nil
 }
-
-//func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
-//	for _, v := range metrics {
-//		switch v.MType {
-//		case "gauge":
-//			s.UpdateGauge(v.ID, *v.Value)
-//		case "counter":
-//			s.UpdateCounter(v.ID, *v.Delta)
-//
-//		}
-//	}
-//	encoder := json.NewEncoder(w)
-//	if err := encoder.Encode(metrics[0]); err != nil {
-//		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
-//	}
-//	return nil
-//}
 
 func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 	updatedMetrics := make([]models.Metrics, 0, len(metrics))
