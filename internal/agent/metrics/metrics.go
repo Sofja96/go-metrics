@@ -12,9 +12,12 @@ var ValuesGauge = map[string]float64{}
 
 var ValuesCounter = map[string]int64{}
 
+var pollCount int64
+
 func GetMetrics() []models.Metrics {
 
 	var rtm runtime.MemStats
+	pollCount++
 	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
 
