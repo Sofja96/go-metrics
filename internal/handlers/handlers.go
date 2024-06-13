@@ -103,6 +103,41 @@ func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 		return c.String(http.StatusOK, v)
 	}
 }
+
+//func ValueJSON(s storage.Storage) echo.HandlerFunc {
+//	return func(c echo.Context) error {
+//		var metric models.Metrics
+//		err := json.NewDecoder(c.Request().Body).Decode(&metric)
+//		if err != nil {
+//			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
+//		}
+//		if len(metric.ID) == 0 {
+//			return c.String(http.StatusNotFound, "Metric ID is required")
+//		}
+//		switch metric.MType {
+//		case "counter":
+//			value, ok := s.GetCounterValue(metric.ID)
+//			if !ok {
+//				return c.String(http.StatusNotFound, fmt.Sprintf("Counter metric with ID %s not found", metric.ID))
+//			}
+//			metric.Delta = &value
+//		case "gauge":
+//			value, ok := s.GetGaugeValue(metric.ID)
+//			if !ok {
+//				return c.String(http.StatusNotFound, fmt.Sprintf("Gauge metric with ID %s not found", metric.ID))
+//			}
+//			metric.Value = &value
+//		default:
+//			return c.String(http.StatusBadRequest, "Metric type not found or invalid. Metric type can only be 'gauge' or 'counter'")
+//		}
+//		c.Response().Header().Set("Content-Type", "application/json")
+//		if c.Request().Header.Get("Content-Type") != "application/json" {
+//			return c.String(http.StatusUnsupportedMediaType, "")
+//		}
+//		return c.JSON(http.StatusOK, metric)
+//	}
+//}
+
 func ValueJSON(s storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var metric models.Metrics
@@ -110,25 +145,28 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 		if err != nil {
 			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
+
 		if len(metric.ID) == 0 {
-			return c.String(http.StatusNotFound, "Metric ID is required")
+			return c.String(http.StatusNotFound, "")
 		}
+
 		switch metric.MType {
 		case "counter":
 			value, ok := s.GetCounterValue(metric.ID)
 			if !ok {
-				return c.String(http.StatusNotFound, fmt.Sprintf("Counter metric with ID %s not found", metric.ID))
+				return c.String(http.StatusNotFound, "")
 			}
 			metric.Delta = &value
 		case "gauge":
 			value, ok := s.GetGaugeValue(metric.ID)
 			if !ok {
-				return c.String(http.StatusNotFound, fmt.Sprintf("Gauge metric with ID %s not found", metric.ID))
+				return c.String(http.StatusNotFound, "")
 			}
 			metric.Value = &value
 		default:
-			return c.String(http.StatusBadRequest, "Metric type not found or invalid. Metric type can only be 'gauge' or 'counter'")
+			return c.String(http.StatusBadRequest, "Metric not found or invalid metric type. Metric type can only be 'gauge' or 'counter'")
 		}
+
 		c.Response().Header().Set("Content-Type", "application/json")
 		if c.Request().Header.Get("Content-Type") != "application/json" {
 			return c.String(http.StatusUnsupportedMediaType, "")
