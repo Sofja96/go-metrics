@@ -6,6 +6,7 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/storage"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -109,16 +110,19 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 		var metric models.Metrics
 		err := json.NewDecoder(c.Request().Body).Decode(&metric)
 		if err != nil {
+			log.Printf("Error decoding JSON: %v", err)
 			return c.String(http.StatusBadRequest, fmt.Sprintf("Error in JSON decode: %s", err))
 		}
 		if len(metric.ID) == 0 {
-			return c.String(http.StatusNotFound, "")
+			log.Printf("Metric ID is missing")
+			return c.String(http.StatusNotFound, "Metric ID is required")
 		}
 		switch metric.MType {
 		case "counter":
 			value, ok := s.GetCounterValue(metric.ID)
 			if !ok {
-				return c.String(http.StatusNotFound, "")
+				log.Printf("Counter metric with ID %s not found", metric.ID)
+				return c.String(http.StatusNotFound, fmt.Sprintf("Counter metric with ID %s not found", metric.ID))
 			}
 			metric.Delta = &value
 		case "gauge":
@@ -128,6 +132,7 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 			}
 			metric.Value = &value
 		default:
+			log.Printf("Invalid metric type: %s", metric.MType)
 			return c.String(http.StatusBadRequest, "Metric not fount or invalid metric type. Metric type can only be 'gauge' or 'counter'")
 		}
 		c.Response().Header().Set("Content-Type", "application/json")

@@ -54,9 +54,18 @@ func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorag
 
 }
 
+//	UpdateCounter func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
+//		s.counterData[name] += Counter(value)
+//		return value, nil
+//	}
 func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
-	s.counterData[name] += Counter(value)
-	return value, nil
+	current, ok := s.counterData[name]
+	if !ok {
+		current = 0
+	}
+	newValue := current + Counter(value)
+	s.counterData[name] = newValue
+	return int64(newValue), nil
 }
 
 func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
@@ -65,8 +74,13 @@ func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
 }
 
 func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
-	_, ok := s.counterData[id]
-	return int64(s.counterData[id]), ok
+	value, ok := s.counterData[id]
+	if !ok {
+		log.Printf("Counter metric with ID %s not found", id)
+	} else {
+		log.Printf("Counter metric with ID %s has value %d", id, value)
+	}
+	return int64(value), ok
 }
 
 func (s *MemStorage) GetGaugeValue(id string) (float64, bool) {
