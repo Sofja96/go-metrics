@@ -65,13 +65,8 @@ func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
 }
 
 func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
-	value, ok := s.counterData[id]
-	if !ok {
-		log.Printf("Counter metric with ID %s not found", id)
-	} else {
-		log.Printf("Counter metric with ID %s has value %d", id, value)
-	}
-	return int64(value), ok
+	_, ok := s.counterData[id]
+	return int64(s.counterData[id]), ok
 }
 
 func (s *MemStorage) GetGaugeValue(id string) (float64, bool) {
@@ -119,20 +114,18 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 }
 
 func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
-	updatedMetrics := make([]models.Metrics, 0, len(metrics))
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
 			s.UpdateGauge(v.ID, *v.Value)
-			updatedMetrics = append(updatedMetrics, models.Metrics{MType: "gauge", ID: v.ID, Value: v.Value})
 		case "counter":
-			newValue, _ := s.UpdateCounter(v.ID, *v.Delta)
-			updatedMetrics = append(updatedMetrics, models.Metrics{MType: "counter", ID: v.ID, Delta: &newValue})
+			s.UpdateCounter(v.ID, *v.Delta)
+
 		}
 	}
 	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(updatedMetrics); err != nil {
-		return fmt.Errorf("error occurred while encoding result of batch update: %w", err)
+	if err := encoder.Encode(metrics[0]); err != nil {
+		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
 	}
 	return nil
 }
