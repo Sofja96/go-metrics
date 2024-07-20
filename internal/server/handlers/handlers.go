@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// Webhook - обработчик для обновления одной метрики.
 func Webhook(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
