@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-// Webhook - обработчик для обновления одной метрики.
 func Webhook(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
@@ -82,7 +81,6 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 		if err != nil {
 			ctx.String(http.StatusInternalServerError, "")
 		}
-
 		ctx.Response().Header().Set("Content-Type", "application/json")
 		ctx.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(ctx.Response().Writer).Encode(metrics)
