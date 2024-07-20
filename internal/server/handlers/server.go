@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/Sofja96/go-metrics.git/internal/middleware"
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
-	"github.com/Sofja96/go-metrics.git/internal/storage"
-	"github.com/Sofja96/go-metrics.git/internal/storage/database"
-	"github.com/Sofja96/go-metrics.git/internal/storage/memory"
+	middleware2 "github.com/Sofja96/go-metrics.git/internal/server/middleware"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage/database"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"log"
@@ -45,11 +45,11 @@ func New() *APIServer {
 	defer logger.Sync()
 	key := c.HashKey
 	a.logger = *logger.Sugar()
-	a.echo.Use(middleware.WithLogging(a.logger))
+	a.echo.Use(middleware2.WithLogging(a.logger))
 	if len(key) != 0 {
-		a.echo.Use(middleware.HashMacMiddleware([]byte(key)))
+		a.echo.Use(middleware2.HashMacMiddleware([]byte(key)))
 	}
-	a.echo.Use(middleware.GzipMiddleware())
+	a.echo.Use(middleware2.GzipMiddleware())
 	a.echo.POST("/update/", UpdateJSON(store))
 	a.echo.POST("/updates/", UpdatesBatch(store))
 	a.echo.POST("/value/", ValueJSON(store))
@@ -79,8 +79,8 @@ func CreateServer(s storage.Storage) *echo.Echo {
 	defer logger.Sync()
 	sugar = *logger.Sugar()
 	e := echo.New()
-	e.Use(middleware.WithLogging(sugar))
-	e.Use(middleware.GzipMiddleware())
+	e.Use(middleware2.WithLogging(sugar))
+	e.Use(middleware2.GzipMiddleware())
 	e.POST("/update/", UpdateJSON(s))
 	e.POST("/updates/", UpdatesBatch(s))
 	e.POST("/value/", ValueJSON(s))

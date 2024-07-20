@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/Sofja96/go-metrics.git/internal/storage"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/jackc/pgx/v5"
 	"io"
 	"time"
@@ -17,6 +17,7 @@ type Postgres struct {
 	DB *pgxpool.Pool
 }
 
+// NewStorage - создает хранилище БД
 func NewStorage(dsn string) (*Postgres, error) {
 	dbc := &Postgres{}
 

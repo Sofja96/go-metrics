@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Sofja96/go-metrics.git/internal/handlers"
+	"github.com/Sofja96/go-metrics.git/internal/server/handlers"
 	"log"
 )
 

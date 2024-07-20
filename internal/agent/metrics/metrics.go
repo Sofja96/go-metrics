@@ -8,14 +8,14 @@ import (
 	"runtime"
 )
 
-var ValuesGauge = map[string]float64{}
-
-var ValuesCounter = map[string]int64{}
+var (
+	ValuesGauge   = map[string]float64{}
+	ValuesCounter = map[string]int64{}
+)
 
 func GetMetrics() []models.Metrics {
 
 	var rtm runtime.MemStats
-	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
 
 	ValuesGauge["Alloc"] = float64(rtm.Alloc)

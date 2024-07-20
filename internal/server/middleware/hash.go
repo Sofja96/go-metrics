@@ -48,6 +48,7 @@ func checkSign(key []byte, body []byte, hash string) error {
 	return nil
 }
 
+// HashMacMiddleware - метод цифровой подписи передаваемых данных.
 func HashMacMiddleware(key []byte) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {

@@ -35,10 +35,18 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
 	for k, v := range metrics.ValuesGauge {
-		allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: k, Value: &v})
+		val := v // создаем локальную переменную value
+		allMetrics = append(allMetrics, models.Metrics{
+			MType: "gauge",
+			ID:    k,
+			Value: &v, // передаем указатель на локальную переменную value
+		})
+		log.Printf("KEY_GAUGE: %s,  VALUE: %s", k, strconv.Itoa(int(val)))
 	}
 	for k, v := range metrics.ValuesCounter {
-		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
+		val := v
+		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &val})
+		log.Printf("KEY_COUNTER: %s,  VALUE: %s", k, strconv.Itoa(int(v)))
 	}
 	gz, _ := compress(allMetrics)
 	postBatch(retryClient, url, cfg.HashKey, gz)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestUpdateCounter(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -29,7 +29,7 @@ func TestUpdateCounter(t *testing.T) {
 }
 
 func TestUpdateGauge(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
