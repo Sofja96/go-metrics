@@ -1,5 +1,6 @@
 package envs
 
+// Config - струтура хранения настроек агента.
 type Config struct {
 	Address        string `env:"ADDRESS"`         // адрес работы агента сбора метрик
 	ReportInterval int    `env:"REPORT_INTERVAL"` // интервал отправки метрик
@@ -8,6 +9,7 @@ type Config struct {
 	RateLimit      int    `env:"RATE_LIMIT"`      // ограничение на количество исходящих запросов
 }
 
+// LoadConfig - загружает конфигурацию агента.
 func LoadConfig() *Config {
 	var cfg Config
 	return &cfg

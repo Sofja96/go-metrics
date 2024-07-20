@@ -11,12 +11,14 @@ import (
 	"log"
 )
 
+// APIServer - структура настроек API сервера.
 type APIServer struct {
 	echo    *echo.Echo
 	address string
 	logger  zap.SugaredLogger
 }
 
+// New - создает, инициализурет и конфигурирует новый экземпляр ApiServer.
 func New() *APIServer {
 	a := &APIServer{}
 	c := config.LoadConfig()
@@ -60,6 +62,7 @@ func New() *APIServer {
 	return a
 }
 
+// Start - запускает сервер на заданном адресе.
 func (a *APIServer) Start() error {
 	err := a.echo.Start(a.address)
 	if err != nil {
@@ -70,6 +73,7 @@ func (a *APIServer) Start() error {
 	return nil
 }
 
+// CreateServer - создает и настраивает новый экземпляр Echo с заданным хранилищем.
 func CreateServer(s storage.Storage) *echo.Echo {
 	var sugar zap.SugaredLogger
 	logger, err := zap.NewDevelopment()

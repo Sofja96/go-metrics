@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+var (
+	_ http.ResponseWriter = (*compressWriter)(nil)
+)
+
 // compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
 // сжимать передаваемые данные и выставлять правильные HTTP-заголовки.
 type compressWriter struct {
@@ -43,7 +47,7 @@ func (c *compressWriter) Close() error {
 }
 
 // compressReader реализует интерфейс io.ReadCloser и позволяет прозрачно для сервера
-// декомпрессировать получаемые от клиента данные
+// декомпрессировать получаемые от клиента данные.
 type compressReader struct {
 	r  io.ReadCloser
 	zr *gzip.Reader
@@ -72,7 +76,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
-// GzipMiddleware - метод для архивирования и разорхивирования запросов
+// GzipMiddleware - метод для архивирования и разорхивирования запросов.
 func GzipMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {

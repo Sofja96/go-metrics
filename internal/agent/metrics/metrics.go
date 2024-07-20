@@ -8,16 +8,19 @@ import (
 	"runtime"
 )
 
+// Значения метрик типа gauge и counter.
 var (
-	ValuesGauge   = map[string]float64{}
-	ValuesCounter = map[string]int64{}
+	ValuesGauge   = map[string]float64{} // метрики типа gauge
+	ValuesCounter = map[string]int64{}   // метрики типа counter
 )
 
+// GetMetrics - функция сбора метрик через runtime.MemStats а также случайного значения.
 func GetMetrics() []models.Metrics {
 
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
+	// Заполняем значения метрик типа gauge.
 	ValuesGauge["Alloc"] = float64(rtm.Alloc)
 	ValuesGauge["BuckHashSys"] = float64(rtm.BuckHashSys)
 	ValuesGauge["Frees"] = float64(rtm.Frees)
@@ -47,11 +50,13 @@ func GetMetrics() []models.Metrics {
 	ValuesGauge["GCSys"] = float64(rtm.GCSys)
 	ValuesGauge["RandomValue"] = rand.Float64()
 
+	// Увеличиваем счётчик PollCount.
 	ValuesCounter["PollCount"]++
 
 	return nil
 }
 
+// GetPSMetrics  - функция сбора метрик через gopsutil.
 func GetPSMetrics() ([]models.Metrics, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {

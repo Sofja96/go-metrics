@@ -9,6 +9,7 @@ import (
 	"os"
 )
 
+// saveStorageToFile - функция записи данных из хранилища в файл в формате JSON.
 func saveStorageToFile(s *MemStorage, filePath string) error {
 	var metrics AllMetrics
 	metrics.Counter = s.counterData
@@ -23,6 +24,7 @@ func saveStorageToFile(s *MemStorage, filePath string) error {
 
 }
 
+// Dump - переодически сохраняет состояние хранилища в файл в формате JSON.
 func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	dir, _ := path.Split(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -42,6 +44,7 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	return nil
 }
 
+// LoadStorageFromFile - загружает данные из файла в формате JSON.
 func LoadStorageFromFile(s *MemStorage, filePath string) error {
 	file, err := os.ReadFile(filePath)
 	if err != nil {

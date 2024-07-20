@@ -89,7 +89,7 @@ func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 	}
 }
 
-// ValueMetric - обработчик для получения метрики по типу и имени
+// ValueMetric - обработчик для получения метрики по типу и имени.
 func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		metricsType := c.Param("typeM")
@@ -189,7 +189,7 @@ func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 	}
 }
 
-// Ping - обработчик для определения доступности БД
+// Ping - обработчик для определения доступности БД.
 func Ping(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")

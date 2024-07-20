@@ -16,22 +16,20 @@ func WithLogging(sugar zap.SugaredLogger) echo.MiddlewareFunc {
 			if herr != nil {
 				c.Error(herr)
 			}
+
 			resp := c.Response()
 			req := c.Request()
 			duration := time.Since(start)
-			//
 			// отправляем сведения о запросе в zap
-			sugar.Infoln(
-				"uri", req.RequestURI,
+			sugar.Infow(
+				"Request",
 				"method", req.Method,
-				"body", req.Body,
-				"length", req.ContentLength,
-				"duration", duration,
-				"status:", resp.Status,
-				"size:", resp.Size,
+				"uri", req.RequestURI,
+				"duration", duration.String(),
+				"status", resp.Status,
+				"size", resp.Size,
 			)
 			return nil
 		}
-
 	}
 }

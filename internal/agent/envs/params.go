@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// RunParameters - функция настройки флагов и переменных окружения агента.
 func RunParameters(cfg *Config) error {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "address and port to run server")
 	flag.IntVar(&cfg.ReportInterval, "r", 2, "frequency of sending metrics to the server")
