@@ -62,7 +62,6 @@ func startTask(taskChan chan []models.Metrics) {
 		select {
 		case <-taskChan:
 			return
-		default:
 		}
 	}
 }

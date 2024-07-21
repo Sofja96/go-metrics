@@ -303,7 +303,7 @@ func TestValueJSON(t *testing.T) {
 
 	notValidGaugeJSON := `{"type": "gauge", "id": ""}`
 
-	invalidJson := `{"type": "gauge", "id": gauge}`
+	invalidJSON := `{"type": "gauge", "id": gauge}`
 
 	noCounterJSON := `{"type": "counter", "id": "counter1"}`
 	noGagugeJSON := `{"type": "gauge", "id": "gauge1"}`
@@ -370,7 +370,7 @@ func TestValueJSON(t *testing.T) {
 		{
 			name:        "Get metrics with invalid Json",
 			path:        fmt.Sprintf("%s/value/", httpTestServer.URL),
-			body:        invalidJson,
+			body:        invalidJSON,
 			contentType: "application/json",
 			expected: result{
 				code: http.StatusBadRequest,
@@ -439,7 +439,7 @@ func TestUpdateJSON(t *testing.T) {
 
 	notValidGaugeJSON := `{"type": "gauge", "id": ""}` //404
 
-	invalidJson := `{"type": "gauge", "id": gauge}` //400
+	invalidJSON := `{"type": "gauge", "id": gauge}` //400
 
 	type result struct {
 		code int
@@ -503,7 +503,7 @@ func TestUpdateJSON(t *testing.T) {
 		{
 			name:        "update metrics with invalid Json",
 			path:        fmt.Sprintf("%s/update/", httpTestServer.URL),
-			body:        invalidJson,
+			body:        invalidJSON,
 			contentType: "application/json",
 			expected: result{
 				code: http.StatusBadRequest,
