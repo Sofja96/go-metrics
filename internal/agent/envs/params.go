@@ -9,7 +9,7 @@ import (
 // RunParameters - функция настройки флагов и переменных окружения агента.
 func RunParameters(cfg *Config) error {
 	flag.StringVar(&cfg.Address, "a", "localhost:8080", "address and port to run server")
-	flag.IntVar(&cfg.ReportInterval, "r", 4, "frequency of sending metrics to the server")
+	flag.IntVar(&cfg.ReportInterval, "r", 10, "frequency of sending metrics to the server")
 	flag.IntVar(&cfg.PollInterval, "p", 2, "frequency of polling metrics")
 	flag.StringVar(&cfg.HashKey, "k", "", "key for hash")
 	flag.IntVar(&cfg.RateLimit, "l", 2, "Rate Limit")

@@ -60,8 +60,10 @@ func Run() error {
 func startTask(taskChan chan []models.Metrics) {
 	for {
 		select {
-		case <-taskChan:
-			return
+		case _, ok := <-taskChan:
+			if !ok {
+				return // Выход из цикла, если канал закрыт
+			}
 		}
 	}
 }
