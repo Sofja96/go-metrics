@@ -11,6 +11,8 @@ import (
 
 // saveStorageToFile - функция записи данных из хранилища в файл в формате JSON.
 func saveStorageToFile(s *MemStorage, filePath string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	var metrics AllMetrics
 	metrics.Counter = s.counterData
 	metrics.Gauge = s.gaugeData

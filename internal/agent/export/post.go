@@ -38,6 +38,9 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
 
+	metrics.Mu.Lock()
+	defer metrics.Mu.Unlock()
+
 	for k, v := range metrics.ValuesGauge {
 		val := v // создаем локальную переменную value
 		allMetrics = append(allMetrics, models.Metrics{

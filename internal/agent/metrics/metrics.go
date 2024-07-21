@@ -6,16 +6,21 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
+	"sync"
 )
 
 // Значения метрик типа gauge и counter.
 var (
 	ValuesGauge   = map[string]float64{} // метрики типа gauge
 	ValuesCounter = map[string]int64{}   // метрики типа counter
+	Mu            sync.Mutex
 )
 
 // GetMetrics - функция сбора метрик через runtime.MemStats а также случайного значения.
 func GetMetrics() []models.Metrics {
+
+	Mu.Lock()
+	defer Mu.Unlock()
 
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
