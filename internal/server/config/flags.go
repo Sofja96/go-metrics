@@ -7,13 +7,11 @@ import (
 	"strconv"
 )
 
-// ParseFlags обрабатывает аргументы командной строки
-// и сохраняет их значения в соответствующих переменных
+// ParseFlags - функция настройки флагов и переменных окружения сервера.
 func ParseFlags(s *Config) {
-	//var conf Config
 	flag.StringVar(&s.Address, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&s.FilePath, "f", "/tmp/metrics-db.json", "path file storage to save data")
-	flag.IntVar(&s.StoreInterval, "i", 300, "interval for saving metrics on the server")
+	flag.IntVar(&s.StoreInterval, "i", 3, "interval for saving metrics on the server")
 	flag.BoolVar(&s.Restore, "r", true, "need to load data at startup")
 	flag.StringVar(&s.DatabaseDSN, "d", "", "connect to database")
 	flag.StringVar(&s.HashKey, "k", "", "key for hash")

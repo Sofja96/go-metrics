@@ -6,18 +6,26 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
+	"sync"
 )
 
-var ValuesGauge = map[string]float64{}
+// Значения метрик типа gauge и counter.
+var (
+	ValuesGauge   = map[string]float64{} // метрики типа gauge
+	ValuesCounter = map[string]int64{}   // метрики типа counter
+	Mu            sync.Mutex
+)
 
-var ValuesCounter = map[string]int64{}
-
+// GetMetrics - функция сбора метрик через runtime.MemStats а также случайного значения.
 func GetMetrics() []models.Metrics {
 
+	Mu.Lock()
+	defer Mu.Unlock()
+
 	var rtm runtime.MemStats
-	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
 
+	// Заполняем значения метрик типа gauge.
 	ValuesGauge["Alloc"] = float64(rtm.Alloc)
 	ValuesGauge["BuckHashSys"] = float64(rtm.BuckHashSys)
 	ValuesGauge["Frees"] = float64(rtm.Frees)
@@ -47,11 +55,13 @@ func GetMetrics() []models.Metrics {
 	ValuesGauge["GCSys"] = float64(rtm.GCSys)
 	ValuesGauge["RandomValue"] = rand.Float64()
 
+	// Увеличиваем счётчик PollCount.
 	ValuesCounter["PollCount"]++
 
 	return nil
 }
 
+// GetPSMetrics  - функция сбора метрик через gopsutil.
 func GetPSMetrics() ([]models.Metrics, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {

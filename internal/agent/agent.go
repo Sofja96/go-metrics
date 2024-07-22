@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// getMetrics -  собирает метрики и отправляет их в канал.
 func getMetrics(c chan<- []models.Metrics) {
 	RnMetrics := metrics.GetMetrics()
 	PsMetrics, _ := metrics.GetPSMetrics()
@@ -17,6 +18,7 @@ func getMetrics(c chan<- []models.Metrics) {
 	c <- PsMetrics
 }
 
+// Run -  запускает агентов для сбора и отправки метрик.
 func Run() error {
 	var wg sync.WaitGroup
 	cfg := envs.LoadConfig()
@@ -54,6 +56,7 @@ func Run() error {
 	return nil
 }
 
+// startTask - выполняет задачи из канала метрик.
 func startTask(taskChan chan []models.Metrics) {
 	for {
 		select {

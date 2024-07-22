@@ -17,34 +17,50 @@ import (
 	"time"
 )
 
+// Настройки повторной отправки по умолчанию.
 const (
-	retryMax     int           = 3
-	retryWaitMin time.Duration = time.Second * 1
-	retryWaitMax time.Duration = time.Second * 5
+	retryMax     int           = 3               // максимальное количество
+	retryWaitMin time.Duration = time.Second * 1 // минимальное время ожидания
+	retryWaitMax time.Duration = time.Second * 5 // максимальное время ожидания
 )
 
+// PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
 func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, wg *sync.WaitGroup) {
 	metrics.GetMetrics()
 	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
 	log.Println("Running agent on", cfg.Address)
 	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
+
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = retryMax
 	retryClient.RetryWaitMin = retryWaitMin
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
+
+	metrics.Mu.Lock()
+	defer metrics.Mu.Unlock()
+
 	for k, v := range metrics.ValuesGauge {
-		allMetrics = append(allMetrics, models.Metrics{MType: "gauge", ID: k, Value: &v})
+		val := v // создаем локальную переменную value
+		allMetrics = append(allMetrics, models.Metrics{
+			MType: "gauge",
+			ID:    k,
+			Value: &v, // передаем указатель на локальную переменную value
+		})
+		log.Printf(k + ":" + strconv.Itoa(int(val)))
 	}
 	for k, v := range metrics.ValuesCounter {
-		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &v})
+		val := v
+		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &val})
+		log.Printf(k + ":" + strconv.Itoa(int(val)))
 	}
 	gz, _ := compress(allMetrics)
 	postBatch(retryClient, url, cfg.HashKey, gz)
-	wg.Done() // decrement counter
+	wg.Done()
 }
 
+// postBatch - функция отправки сжатых метрик на сервер.
 func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error {
 	req, err := retryablehttp.NewRequest("POST", url, m)
 	if err != nil {
@@ -53,6 +69,7 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error 
 	req.Header.Add("content-type", "application/json")
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
+
 	if len(key) != 0 {
 		hmac, err := hash.ComputeHmac256([]byte(key), m)
 		if err != nil {
@@ -65,13 +82,14 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error 
 		return fmt.Errorf("error connection: %w", err)
 	}
 	defer resp.Body.Close()
-	log.Println(resp.StatusCode)
-	log.Println(resp.Header)
-	log.Println(resp.Body)
+
+	log.Printf("Response Status Code: %d\n", resp.StatusCode)
+	log.Printf("Response Headers: %v\n", resp.Header)
 
 	return nil
 }
 
+// compress - сжимает с помощью gzip список метрик в формате JSON.
 func compress(metrics []models.Metrics) ([]byte, error) {
 	var b bytes.Buffer
 	js, err := json.Marshal(metrics)
@@ -95,6 +113,7 @@ func compress(metrics []models.Metrics) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// linearBackoff - расчитывает время ожижания между попытками отправки
 func linearBackoff(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	sleepTime := min + min*time.Duration(2*attemptNum)
 	return sleepTime
