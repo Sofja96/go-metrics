@@ -92,7 +92,12 @@ func GzipMiddleware() echo.MiddlewareFunc {
 				// меняем оригинальный http.ResponseWriter на новый
 				c.Response().Writer = cw
 				// не забываем отправить клиенту все сжатые данные после завершения middleware
-				defer cw.Close()
+				defer func(cw *compressWriter) {
+					err := cw.Close()
+					if err != nil {
+						return
+					}
+				}(cw)
 			}
 
 			// проверяем, что клиент отправил серверу сжатые данные в формате gzip

@@ -20,13 +20,19 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 
 		if metricsType == "counter" {
 			if value, err := strconv.ParseInt(metricsValue, 10, 64); err == nil {
-				storage.UpdateCounter(metricsName, value)
+				_, err := storage.UpdateCounter(metricsName, value)
+				if err != nil {
+					return err
+				}
 			} else {
 				return c.String(http.StatusBadRequest, "incorrect values(int) of metric: "+metricsValue)
 			}
 		} else if metricsType == "gauge" {
 			if value, err := strconv.ParseFloat(metricsValue, 64); err == nil {
-				storage.UpdateGauge(metricsName, value)
+				_, err := storage.UpdateGauge(metricsName, value)
+				if err != nil {
+					return err
+				}
 			} else {
 				return c.String(http.StatusBadRequest, "incorrect values(float) of metric: "+metricsValue)
 			}
@@ -53,9 +59,15 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		}
 		switch metric.MType {
 		case "counter":
-			s.UpdateCounter(metric.ID, *metric.Delta)
+			_, err := s.UpdateCounter(metric.ID, *metric.Delta)
+			if err != nil {
+				return err
+			}
 		case "gauge":
-			s.UpdateGauge(metric.ID, *metric.Value)
+			_, err := s.UpdateGauge(metric.ID, *metric.Value)
+			if err != nil {
+				return err
+			}
 		default:
 			return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
 		}

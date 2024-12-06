@@ -145,9 +145,15 @@ func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			s.UpdateGauge(v.ID, *v.Value)
+			_, err := s.UpdateGauge(v.ID, *v.Value)
+			if err != nil {
+				return fmt.Errorf("error update gauge for batch update: %v", err)
+			}
 		case "counter":
-			s.UpdateCounter(v.ID, *v.Delta)
+			_, err := s.UpdateCounter(v.ID, *v.Delta)
+			if err != nil {
+				return fmt.Errorf("error update counter for batch update: %v", err)
+			}
 
 		}
 	}
