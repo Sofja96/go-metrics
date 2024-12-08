@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Sofja96/go-metrics.git/internal/models"
-	_ "github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
 	"github.com/golang/mock/gomock"
