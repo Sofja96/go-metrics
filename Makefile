@@ -7,6 +7,9 @@ MOCK_STORAGE_DST=./internal/server/storage/mocks/mocks.go
 mock-gen:
 	$(GOPATH)/bin/mockgen -source=$(MOCK_STORAGE_SRC) -destination=$(MOCK_STORAGE_DST)
 
+.PHONY=build
+build:
+	go build -o agent cmd/agent/main.go && go build -o server cmd/server/main.go
 
 .PHONY: test
 test:
