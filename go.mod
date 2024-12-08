@@ -9,6 +9,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/kisielk/errcheck v1.8.0
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/lib/pq v1.10.9
 	github.com/mdempsky/maligned v0.0.0-20220203220013-d7cd9a96ae47
 	github.com/shirou/gopsutil/v3 v3.23.10
 	github.com/stretchr/testify v1.8.4

@@ -6,6 +6,7 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"time"
 )
 
