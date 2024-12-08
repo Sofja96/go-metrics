@@ -13,7 +13,7 @@ func ParseFlags(s *Config) {
 	flag.StringVar(&s.FilePath, "f", "/tmp/metrics-db.json", "path file storage to save data")
 	flag.IntVar(&s.StoreInterval, "i", 3, "interval for saving metrics on the server")
 	flag.BoolVar(&s.Restore, "r", true, "need to load data at startup")
-	flag.StringVar(&s.DatabaseDSN, "d", "", "connect to database")
+	flag.StringVar(&s.DatabaseDSN, "d", "postgres://metrics:userpassword@localhost:5432/metrics?sslmode=disable", "connect to database")
 	flag.StringVar(&s.HashKey, "k", "", "key for hash")
 	flag.Parse()
 
