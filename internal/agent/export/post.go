@@ -48,12 +48,12 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 			ID:    k,
 			Value: &v, // передаем указатель на локальную переменную value
 		})
-		log.Printf(k + ":" + strconv.Itoa(int(val)))
+		log.Printf("%s: %d", k, int(val))
 	}
 	for k, v := range metrics.ValuesCounter {
 		val := v
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &val})
-		log.Printf(k + ":" + strconv.Itoa(int(val)))
+		log.Printf("%s: %d", k, int(val))
 	}
 	gz, _ := compress(allMetrics)
 	postBatch(retryClient, url, cfg.HashKey, gz)
