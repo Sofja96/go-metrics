@@ -43,19 +43,22 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 		c.Response().Header().Set("Content-Type", "text/html; charset=utf-8")
 		return c.String(http.StatusOK, "")
 	}
-
 }
 
 // UpdateJSON - обработчик для обновления одной метрики в формате JSON.
 func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("Content-Type", "application/json")
+		if ctx.Request().Header.Get("Content-Type") != "application/json" {
+			return ctx.String(http.StatusUnsupportedMediaType, "")
+		}
 		var metric models.Metrics
 		err := json.NewDecoder(ctx.Request().Body).Decode(&metric)
 		if err != nil {
 			return ctx.String(http.StatusBadRequest, "Error in JSON decode: "+err.Error())
 		}
 		if len(metric.ID) == 0 {
-			return ctx.String(http.StatusNotFound, "No id metric for"+metric.MType)
+			return ctx.String(http.StatusNotFound, "No id metric for "+metric.MType)
 		}
 		switch metric.MType {
 		case "counter":
@@ -71,10 +74,6 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 		default:
 			return ctx.String(http.StatusNotFound, "Invalid metric type. Can only be 'gauge' or 'counter'")
 		}
-		ctx.Response().Header().Set("Content-Type", "application/json")
-		if ctx.Request().Header.Get("Content-Type") != "application/json" {
-			return ctx.String(http.StatusUnsupportedMediaType, "")
-		}
 		return ctx.JSON(http.StatusOK, metric)
 	}
 }
@@ -82,21 +81,23 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 // UpdatesBatch - обработчик для обновления нескольких метрик.
 func UpdatesBatch(s storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
+		ctx.Response().Header().Set("Content-Type", "application/json")
+		if ctx.Request().Header.Get("Content-Type") != "application/json" {
+			return ctx.String(http.StatusUnsupportedMediaType, "")
+		}
 		var metrics []models.Metrics
-		err := json.NewDecoder(ctx.Request().Body).Decode(&metrics)
-		if err != nil {
-			return ctx.String(http.StatusBadRequest, "Error in JSON decode"+err.Error())
+		if err := ctx.Bind(&metrics); err != nil {
+			return ctx.JSON(http.StatusBadRequest, "invalid json "+err.Error())
 		}
 		if len(metrics) == 0 {
-			return ctx.String(http.StatusBadRequest, "metric is empty")
+			return ctx.String(http.StatusBadRequest, "metrics is empty")
 		}
-		err = s.BatchUpdate(ctx.Response().Writer, metrics)
+		err := s.BatchUpdate(metrics)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, "")
+			return ctx.String(http.StatusInternalServerError, "error batch update")
 		}
-		ctx.Response().Header().Set("Content-Type", "application/json")
-		ctx.Response().WriteHeader(http.StatusOK)
-		return json.NewEncoder(ctx.Response().Writer).Encode(metrics)
+
+		return ctx.JSON(http.StatusOK, metrics)
 	}
 }
 
@@ -130,13 +131,17 @@ func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 // ValueJSON - обработчик для получения метрики по типу и имени в формате JSON.
 func ValueJSON(s storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/json")
+		if c.Request().Header.Get("Content-Type") != "application/json" {
+			return c.String(http.StatusUnsupportedMediaType, "")
+		}
 		var metric models.Metrics
 		err := json.NewDecoder(c.Request().Body).Decode(&metric)
 		if err != nil {
 			return c.String(http.StatusBadRequest, "Error in JSON decode: "+err.Error())
 		}
 		if len(metric.ID) == 0 {
-			return c.String(http.StatusNotFound, "No id metric for: "+metric.MType)
+			return c.String(http.StatusNotFound, "No id metric for "+metric.MType)
 		}
 		switch metric.MType {
 		case "counter":
@@ -153,10 +158,6 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 			metric.Value = &value
 		default:
 			return c.String(http.StatusBadRequest, "Metric not found or invalid metric type. Metric type can only be 'gauge' or 'counter'")
-		}
-		c.Response().Header().Set("Content-Type", "application/json")
-		if c.Request().Header.Get("Content-Type") != "application/json" {
-			return c.String(http.StatusUnsupportedMediaType, "")
 		}
 		return c.JSON(http.StatusOK, metric)
 	}
@@ -196,7 +197,6 @@ func GetAllMetrics(storage storage.Storage) echo.HandlerFunc {
 		result.WriteString("</body></html>")
 
 		return ctx.String(http.StatusOK, result.String())
-
 	}
 }
 
@@ -205,14 +205,9 @@ func Ping(storage storage.Storage) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		ctx.Response().Header().Set("Content-Type", "text/html")
 		err := storage.Ping()
-		if err == nil {
-			ctx.String(http.StatusOK, "Connection database is OK")
-		} else {
-			ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
-		}
 		if err != nil {
-			return fmt.Errorf("error connection db: %w", err)
+			return ctx.String(http.StatusInternalServerError, "Connection database is NOT ok")
 		}
-		return nil
+		return ctx.String(http.StatusOK, "Connection database is OK")
 	}
 }

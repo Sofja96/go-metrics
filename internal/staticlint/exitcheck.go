@@ -12,7 +12,6 @@ var ExitAnalyzer = &analysis.Analyzer{
 	Run:  run,
 }
 
-// todo переписать, пока не работает
 // run выполняет проверку для каждого файла.
 func run(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {

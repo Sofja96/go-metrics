@@ -72,25 +72,3 @@ func (a *APIServer) Start() error {
 
 	return nil
 }
-
-// CreateServer - создает и настраивает новый экземпляр Echo с заданным хранилищем.
-func CreateServer(s storage.Storage) *echo.Echo {
-	var sugar zap.SugaredLogger
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-	sugar = *logger.Sugar()
-	e := echo.New()
-	e.Use(middleware2.WithLogging(sugar))
-	e.Use(middleware2.GzipMiddleware())
-	e.POST("/update/", UpdateJSON(s))
-	e.POST("/updates/", UpdatesBatch(s))
-	e.POST("/value/", ValueJSON(s))
-	e.GET("/", GetAllMetrics(s))
-	e.GET("/value/:typeM/:nameM", ValueMetric(s))
-	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
-	e.GET("/ping", Ping(s))
-	return e
-}

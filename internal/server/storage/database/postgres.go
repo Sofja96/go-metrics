@@ -2,12 +2,11 @@ package database
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/jmoiron/sqlx"
-	"io"
+	_ "github.com/lib/pq"
 	"time"
 )
 
@@ -25,14 +24,6 @@ func NewStorage(dsn string) (*Postgres, error) {
 	}
 
 	dbc.DB = conn
-
-	//conn, err := pgxpool.New(context.Background(), dsn)
-	//if err != nil {
-	//	dbc.DB = nil
-	//	return nil, err
-	//} else {
-	//	dbc.DB = conn
-	//}
 
 	err = dbc.InitDB(context.Background())
 	if err != nil {
@@ -102,6 +93,7 @@ func (pg *Postgres) GetCounterValue(id string) (int64, bool) {
 	}
 	return cm.Value, true
 }
+
 func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 	ctx := context.Background()
 	gauges := make([]storage.GaugeMetric, 0)
@@ -159,15 +151,17 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (pg *Postgres) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
+func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 	ctx := context.Background()
 	tx, err := pg.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
 	}
 	defer tx.Rollback()
-	encoder := json.NewEncoder(w)
-	results := make([]models.Metrics, len(metrics))
+
+	if len(metrics) == 0 {
+		return fmt.Errorf("no metrics provided")
+	}
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
@@ -181,13 +175,15 @@ func (pg *Postgres) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
 				return fmt.Errorf("error update counter: %v", err)
 			}
 			*v.Delta = val
+		default:
+			return fmt.Errorf("unsopperted metrics type: %s", v.MType)
 		}
-		results = append(results, v)
 	}
-	if err := encoder.Encode(results[0]); err != nil {
-		return fmt.Errorf("error occured on encoding result of batchupdate :%w", err)
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
-	return tx.Commit()
+	return nil
 }
 
 func (pg *Postgres) Ping() error {

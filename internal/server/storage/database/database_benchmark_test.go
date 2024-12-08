@@ -1,7 +1,6 @@
 package database
 
 import (
-	"bytes"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"testing"
 )
@@ -76,8 +75,7 @@ func BenchmarkBatchUpdate(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var buf bytes.Buffer
-		err := db.BatchUpdate(&buf, metrics)
+		err := db.BatchUpdate(metrics)
 		if err != nil {
 			b.Fatalf("Failed to batch update: %v", err)
 		}

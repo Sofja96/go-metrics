@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"bytes"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"testing"
 )
@@ -46,8 +45,7 @@ func BenchmarkBatchUpdate(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var buf bytes.Buffer
-		s.BatchUpdate(&buf, metrics)
+		s.BatchUpdate(metrics)
 	}
 }
 
