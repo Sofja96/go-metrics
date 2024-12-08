@@ -70,7 +70,7 @@ func TestGetCounterValue(t *testing.T) {
 	assert.True(t, ok, "GetCounterValue should return true for existing counter")
 	assert.Equal(t, int64(10), value)
 
-	value, ok = s.GetCounterValue("nonExistentCounter")
+	_, ok = s.GetCounterValue("nonExistentCounter")
 	assert.False(t, ok, "GetCounterValue should return false for non-existing counter")
 }
 
@@ -83,7 +83,7 @@ func TestGetGaugeValue(t *testing.T) {
 	assert.True(t, ok, "GetGaugeValue should return true for existing gauge")
 	assert.Equal(t, 20.5, value)
 
-	value, ok = s.GetGaugeValue("nonExistentGauge")
+	_, ok = s.GetGaugeValue("nonExistentGauge")
 	assert.False(t, ok, "GetGaugeValue should return false for non-existing gauge")
 }
 
