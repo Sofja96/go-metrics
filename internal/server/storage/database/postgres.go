@@ -113,9 +113,7 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 		}
 		_, err := pg.UpdateGauge(gm.Name, gm.Value)
 		if err != nil {
-			if err != nil {
-				return nil, fmt.Errorf("error update gauge: %v", err)
-			}
+			return nil, fmt.Errorf("error update gauge: %v", err)
 		}
 		gauges = append(gauges, gm)
 	}
