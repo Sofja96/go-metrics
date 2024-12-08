@@ -1,0 +1,12 @@
+[
+  {
+    "id": "Alloc",
+    "type": "gauge",
+    "value": 1.98
+  },
+  {
+    "id": "PollCount1",
+    "type": "counter",
+    "delta": 2
+  }
+]
