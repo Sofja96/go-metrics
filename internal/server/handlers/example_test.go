@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
+	"github.com/labstack/echo/v4"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +14,9 @@ import (
 // ExampleUpdateJSON демонстрирует пример запроса POST к /update/
 func ExampleUpdateJSON() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+
+	e.POST("/update/", UpdateJSON(s))
 
 	body := `{"type":"counter", "id":"counter","delta":10}`
 	req := httptest.NewRequest(http.MethodPost, "/update/", bytes.NewBufferString(body))
@@ -31,7 +34,9 @@ func ExampleUpdateJSON() {
 // ExampleUpdatesBatch демонстрирует пример запроса POST к /updates/
 func ExampleUpdatesBatch() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+
+	e.POST("/updates/", UpdatesBatch(s))
 
 	reqBody := `[{"id":"PollCount1","type":"counter","delta":1},{"id":"MyAlloc","type":"gauge","value":12.52}]`
 
@@ -50,7 +55,8 @@ func ExampleUpdatesBatch() {
 // ExampleValueJSON демонстрирует пример запроса POST к /value/
 func ExampleValueJSON() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+	e.POST("/value/", ValueJSON(s))
 	_, _ = s.UpdateGauge("gauge", 15.25)
 
 	reqBody := `{"type":"gauge","id":"gauge"}`
@@ -97,7 +103,8 @@ func formatHTML(html string) string {
 // ExampleGetAllMetrics демонстрирует пример запроса GET к /
 func ExampleGetAllMetrics() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+	e.GET("/", GetAllMetrics(s))
 
 	_, _ = s.UpdateGauge("gauge", 15.25)
 	_, _ = s.UpdateGauge("gauge1", 4.56)
@@ -133,7 +140,8 @@ func ExampleGetAllMetrics() {
 // ExampleValueMetric демонстрирует пример запроса GET к /value/:typeM/:nameM
 func ExampleValueMetric() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 
 	_, _ = s.UpdateCounter("PollCount1", 10)
 
@@ -151,7 +159,8 @@ func ExampleValueMetric() {
 // ExampleWebhook демонстрирует пример запроса POST к /update/:typeM/:nameM/:valueM
 func ExampleWebhook() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
 
 	req := httptest.NewRequest(http.MethodPost, "/update/counter/PollCount/10", nil)
 	rec := httptest.NewRecorder()
@@ -167,7 +176,8 @@ func ExampleWebhook() {
 // ExamplePing демонстрирует пример запроса GET к /ping
 func ExamplePing() {
 	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
-	e := CreateServer(s)
+	e := echo.New()
+	e.GET("/ping", Ping(s))
 
 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 	rec := httptest.NewRecorder()
