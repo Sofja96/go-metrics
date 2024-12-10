@@ -129,6 +129,70 @@ type mocks struct {
 	storage *storagemock.MockStorage
 }
 
+func TestUpdateGaugeData(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+
+	testCases := []struct {
+		name      string
+		inputData map[string]Gauge
+		expected  map[string]Gauge
+	}{
+		{
+			name:      "UpdateGaugeData() Test 1",
+			inputData: map[string]Gauge{"gauge1": 10.5, "gauge2": 20.0},
+			expected:  map[string]Gauge{"gauge1": 10.5, "gauge2": 20.0},
+		},
+		{
+			name:      "UpdateGaugeData() Test 2",
+			inputData: map[string]Gauge{"gauge3": 15.5},
+			expected:  map[string]Gauge{"gauge3": 15.5},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			s.UpdateGaugeData(test.inputData)
+
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+
+			assert.Equal(t, test.expected, s.gaugeData)
+		})
+	}
+}
+
+func TestUpdateCounterData(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+
+	testCases := []struct {
+		name      string
+		inputData map[string]Counter
+		expected  map[string]Counter
+	}{
+		{
+			name:      "UpdateCounterData() Test 1",
+			inputData: map[string]Counter{"counter1": 5, "counter2": 10},
+			expected:  map[string]Counter{"counter1": 5, "counter2": 10},
+		},
+		{
+			name:      "UpdateCounterData() Test 2",
+			inputData: map[string]Counter{"counter3": 15},
+			expected:  map[string]Counter{"counter3": 15},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			s.UpdateCounterData(test.inputData)
+
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+
+			assert.Equal(t, test.expected, s.counterData)
+		})
+	}
+}
+
 func TestBatchUpdate(t *testing.T) {
 	s, _ := NewMemStorage(300, "", false)
 
