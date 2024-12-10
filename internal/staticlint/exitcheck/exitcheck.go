@@ -1,4 +1,4 @@
-package staticlint
+package exitcheck
 
 import (
 	"go/ast"

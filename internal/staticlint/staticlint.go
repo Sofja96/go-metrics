@@ -1,8 +1,7 @@
 package staticlint
 
 import (
-	"github.com/kisielk/errcheck/errcheck"
-	"github.com/mdempsky/maligned/passes/maligned"
+	// Стандартная библиотека
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/nilness"
@@ -10,7 +9,12 @@ import (
 	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/structtag"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
+	// Внешние библиотеки
+	"github.com/kisielk/errcheck/errcheck"
+	"github.com/mdempsky/maligned/passes/maligned"
 	"honnef.co/go/tools/staticcheck"
+	// Собственные модули
+	"github.com/Sofja96/go-metrics.git/internal/staticlint/exitcheck"
 )
 
 /*
@@ -36,14 +40,14 @@ func Run() {
 	var analyzers []*analysis.Analyzer
 	analyzers = append(
 		analyzers,
-		printf.Analyzer,       //pkg pass
-		shadow.Analyzer,       //pkg pass
-		structtag.Analyzer,    //pkg pass
-		nilness.Analyzer,      //pkg pass
-		unusedresult.Analyzer, //pkg pass
-		errcheck.Analyzer,     //public analyzer
-		maligned.Analyzer,     //public analyzer
-		ExitAnalyzer,          //my analyzer
+		printf.Analyzer,
+		shadow.Analyzer,
+		structtag.Analyzer,
+		nilness.Analyzer,
+		unusedresult.Analyzer,
+		errcheck.Analyzer,
+		maligned.Analyzer,
+		exitcheck.ExitAnalyzer,
 	)
 
 	checks := map[string]bool{

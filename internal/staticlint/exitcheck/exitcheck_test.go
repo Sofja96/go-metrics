@@ -1,4 +1,4 @@
-package staticlint
+package exitcheck
 
 import (
 	"golang.org/x/tools/go/analysis/analysistest"

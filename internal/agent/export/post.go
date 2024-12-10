@@ -46,7 +46,7 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 		allMetrics = append(allMetrics, models.Metrics{
 			MType: "gauge",
 			ID:    k,
-			Value: &v, // передаем указатель на локальную переменную value
+			Value: &val, // передаем указатель на локальную переменную value
 		})
 		log.Printf("%s: %d", k, int(val))
 	}
