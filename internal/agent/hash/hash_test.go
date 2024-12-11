@@ -1,8 +1,10 @@
 package hash
 
 import (
-	"github.com/stretchr/testify/require"
+	//стандартные библиотеки
 	"testing"
+	//собственные модули
+	"github.com/stretchr/testify/require"
 )
 
 func TestComputeHmac256(t *testing.T) {

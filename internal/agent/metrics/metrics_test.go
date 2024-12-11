@@ -1,10 +1,11 @@
 package metrics
 
 import (
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetMetrics(t *testing.T) {

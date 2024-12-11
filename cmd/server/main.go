@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/server/handlers"
 	"log"
+
+	"github.com/Sofja96/go-metrics.git/internal/server/handlers"
 )
 
 const (

@@ -1,8 +1,9 @@
 package database
 
 import (
-	"github.com/Sofja96/go-metrics.git/internal/models"
 	"testing"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Функция для создания нового подключения к базе данных для тестов

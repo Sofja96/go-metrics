@@ -2,12 +2,13 @@ package memory
 
 import (
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
-	"github.com/golang/mock/gomock"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
 )
 
 func TestUpdateCounter(t *testing.T) {

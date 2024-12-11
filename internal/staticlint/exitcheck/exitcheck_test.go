@@ -1,8 +1,9 @@
 package exitcheck
 
 import (
-	"golang.org/x/tools/go/analysis/analysistest"
 	"testing"
+
+	"golang.org/x/tools/go/analysis/analysistest"
 )
 
 // Тестируем ExitAnalyzer

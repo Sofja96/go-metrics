@@ -3,12 +3,13 @@ package middleware
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGzipMiddleware_Compression(t *testing.T) {

@@ -3,12 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 )
 
 // Webhook - обработчик для обновления одной метрики.

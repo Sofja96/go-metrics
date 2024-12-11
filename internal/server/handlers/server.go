@@ -1,14 +1,16 @@
 package handlers
 
 import (
+	"log"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
 	middleware2 "github.com/Sofja96/go-metrics.git/internal/server/middleware"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/database"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
-	"log"
 )
 
 // APIServer - структура настроек API сервера.

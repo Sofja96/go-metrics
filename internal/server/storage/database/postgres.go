@@ -3,11 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"time"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 )
 
 type Postgres struct {

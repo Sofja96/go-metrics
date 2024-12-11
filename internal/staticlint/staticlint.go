@@ -9,10 +9,12 @@ import (
 	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/structtag"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
+
 	// Внешние библиотеки
 	"github.com/kisielk/errcheck/errcheck"
 	"github.com/mdempsky/maligned/passes/maligned"
 	"honnef.co/go/tools/staticcheck"
+
 	// Собственные модули
 	"github.com/Sofja96/go-metrics.git/internal/staticlint/exitcheck"
 )

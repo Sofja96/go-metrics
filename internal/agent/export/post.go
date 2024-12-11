@@ -5,16 +5,18 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
-	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
-	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/hashicorp/go-retryablehttp"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+
+	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
+	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
+	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Настройки повторной отправки по умолчанию.

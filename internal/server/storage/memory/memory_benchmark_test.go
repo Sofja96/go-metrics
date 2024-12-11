@@ -1,8 +1,9 @@
 package memory
 
 import (
-	"github.com/Sofja96/go-metrics.git/internal/models"
 	"testing"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 func BenchmarkUpdateCounter(b *testing.B) {

@@ -3,11 +3,12 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 )
 
 type Gauge float64

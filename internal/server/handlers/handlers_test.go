@@ -3,20 +3,22 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	middleware2 "github.com/Sofja96/go-metrics.git/internal/server/middleware"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage"
-	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
-	"github.com/Sofja96/go-metrics.git/internal/utils"
-	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	middleware2 "github.com/Sofja96/go-metrics.git/internal/server/middleware"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
+	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 //const (

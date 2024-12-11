@@ -3,12 +3,14 @@ package handlers
 import (
 	"bytes"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
-	"github.com/labstack/echo/v4"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
 )
 
 // ExampleUpdateJSON демонстрирует пример запроса POST к /update/

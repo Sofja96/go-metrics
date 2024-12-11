@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"compress/gzip"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 var (
