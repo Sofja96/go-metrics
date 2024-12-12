@@ -6,9 +6,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"io"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 type hashedWriter struct {

@@ -1,13 +1,14 @@
 package agent
 
 import (
+	"log"
+	"sync"
+	"time"
+
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/export"
 	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
 	"github.com/Sofja96/go-metrics.git/internal/models"
-	"log"
-	"sync"
-	"time"
 )
 
 // getMetrics -  собирает метрики и отправляет их в канал.
@@ -63,7 +64,7 @@ func startTask(taskChan chan []models.Metrics) {
 		case <-taskChan:
 			return
 		default:
-			log.Println("Задача выполняется...")
+			time.Sleep(1 * time.Second)
 		}
 	}
 }

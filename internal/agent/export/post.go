@@ -5,16 +5,18 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
-	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
-	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/hashicorp/go-retryablehttp"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+
+	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
+	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
+	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Настройки повторной отправки по умолчанию.
@@ -46,14 +48,14 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 		allMetrics = append(allMetrics, models.Metrics{
 			MType: "gauge",
 			ID:    k,
-			Value: &v, // передаем указатель на локальную переменную value
+			Value: &val, // передаем указатель на локальную переменную value
 		})
-		log.Printf(k + ":" + strconv.Itoa(int(val)))
+		log.Printf("%s: %d", k, int(val))
 	}
 	for k, v := range metrics.ValuesCounter {
 		val := v
 		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &val})
-		log.Printf(k + ":" + strconv.Itoa(int(val)))
+		log.Printf("%s: %d", k, int(val))
 	}
 	gz, _ := compress(allMetrics)
 	postBatch(retryClient, url, cfg.HashKey, gz)

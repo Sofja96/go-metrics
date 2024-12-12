@@ -2,7 +2,6 @@ package storage
 
 import (
 	"github.com/Sofja96/go-metrics.git/internal/models"
-	"io"
 )
 
 // Storage - интерфейс хранилища
@@ -22,7 +21,7 @@ type Storage interface {
 	// GetAllCounters - получает все метрики типа counter
 	GetAllCounters() ([]CounterMetric, error)
 	// BatchUpdate - обновляет метрики пачкой
-	BatchUpdate(w io.Writer, metrics []models.Metrics) error
+	BatchUpdate(metrics []models.Metrics) error
 }
 
 // CounterMetric - структура метрик counter, содержащая имя и значение

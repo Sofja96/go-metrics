@@ -1,12 +1,17 @@
 package metrics
 
 import (
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
+	//стандартные библиотеки
 	"math/rand"
 	"runtime"
 	"sync"
+
+	//внешние библиотеки
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+
+	//собственные модули
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Значения метрик типа gauge и counter.

@@ -1,9 +1,14 @@
 package memory
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	storagemock "github.com/Sofja96/go-metrics.git/internal/server/storage/mocks"
 )
 
 func TestUpdateCounter(t *testing.T) {
@@ -22,8 +27,9 @@ func TestUpdateCounter(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			s.UpdateCounter(test.metricsName, test.value)
-			assert.Equal(t, Counter(test.result), s.counterData[test.metricsName])
+			counter, err := s.UpdateCounter(test.metricsName, test.value)
+			assert.NoError(t, err)
+			assert.Equal(t, test.result, counter)
 		})
 	}
 }
@@ -43,8 +49,233 @@ func TestUpdateGauge(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			s.UpdateGauge(test.metricsName, test.value)
-			assert.Equal(t, Gauge(test.result), s.gaugeData[test.metricsName])
+			gauge, err := s.UpdateGauge(test.metricsName, test.value)
+			assert.NoError(t, err)
+			assert.Equal(t, test.result, gauge)
 		})
 	}
+}
+
+func TestPing(t *testing.T) {
+	s, _ := NewMemStorage(0, "", false)
+	err := s.Ping()
+	assert.NoError(t, err, "Ping should not return an error")
+}
+
+func TestGetCounterValue(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+	_, err := s.UpdateCounter("testCounter", 10)
+	assert.NoError(t, err)
+
+	value, ok := s.GetCounterValue("testCounter")
+	assert.True(t, ok, "GetCounterValue should return true for existing counter")
+	assert.Equal(t, int64(10), value)
+
+	_, ok = s.GetCounterValue("nonExistentCounter")
+	assert.False(t, ok, "GetCounterValue should return false for non-existing counter")
+}
+
+func TestGetGaugeValue(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+	_, err := s.UpdateGauge("testGauge", 20.5)
+	assert.NoError(t, err)
+
+	value, ok := s.GetGaugeValue("testGauge")
+	assert.True(t, ok, "GetGaugeValue should return true for existing gauge")
+	assert.Equal(t, 20.5, value)
+
+	_, ok = s.GetGaugeValue("nonExistentGauge")
+	assert.False(t, ok, "GetGaugeValue should return false for non-existing gauge")
+}
+
+func TestGetAllCounters(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+	_, err := s.UpdateCounter("testCounter1", 5)
+	assert.NoError(t, err)
+	_, err = s.UpdateCounter("testCounter2", 15)
+	assert.NoError(t, err)
+
+	counters, err := s.GetAllCounters()
+	assert.NoError(t, err)
+	assert.Len(t, counters, 2)
+}
+
+func TestGetAllGauges(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+	_, err := s.UpdateGauge("testGauge1", 10.5)
+	assert.NoError(t, err)
+	_, err = s.UpdateGauge("testGauge2", 20.5)
+	assert.NoError(t, err)
+
+	gauges, err := s.GetAllGauges()
+	assert.NoError(t, err)
+	assert.Len(t, gauges, 2)
+}
+
+func TestGetAllMetrics(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+	_, err := s.UpdateCounter("counter1", 1)
+	assert.NoError(t, err)
+	_, err = s.UpdateGauge("gauge1", 2.2)
+	assert.NoError(t, err)
+
+	allMetrics := s.AllMetrics()
+	assert.Len(t, allMetrics.Counter, 1)
+	assert.Len(t, allMetrics.Gauge, 1)
+	assert.Equal(t, Gauge(2.2), allMetrics.Gauge["gauge1"])
+	assert.Equal(t, Counter(1), allMetrics.Counter["counter1"])
+}
+
+type mocks struct {
+	storage *storagemock.MockStorage
+}
+
+func TestUpdateGaugeData(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+
+	testCases := []struct {
+		name      string
+		inputData map[string]Gauge
+		expected  map[string]Gauge
+	}{
+		{
+			name:      "UpdateGaugeData() Test 1",
+			inputData: map[string]Gauge{"gauge1": 10.5, "gauge2": 20.0},
+			expected:  map[string]Gauge{"gauge1": 10.5, "gauge2": 20.0},
+		},
+		{
+			name:      "UpdateGaugeData() Test 2",
+			inputData: map[string]Gauge{"gauge3": 15.5},
+			expected:  map[string]Gauge{"gauge3": 15.5},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			s.UpdateGaugeData(test.inputData)
+
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+
+			assert.Equal(t, test.expected, s.gaugeData)
+		})
+	}
+}
+
+func TestUpdateCounterData(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+
+	testCases := []struct {
+		name      string
+		inputData map[string]Counter
+		expected  map[string]Counter
+	}{
+		{
+			name:      "UpdateCounterData() Test 1",
+			inputData: map[string]Counter{"counter1": 5, "counter2": 10},
+			expected:  map[string]Counter{"counter1": 5, "counter2": 10},
+		},
+		{
+			name:      "UpdateCounterData() Test 2",
+			inputData: map[string]Counter{"counter3": 15},
+			expected:  map[string]Counter{"counter3": 15},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			s.UpdateCounterData(test.inputData)
+
+			s.mutex.Lock()
+			defer s.mutex.Unlock()
+
+			assert.Equal(t, test.expected, s.counterData)
+		})
+	}
+}
+
+func TestBatchUpdate(t *testing.T) {
+	s, _ := NewMemStorage(300, "", false)
+
+	metrics := []models.Metrics{
+		{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},
+		{MType: "counter", ID: "counter1", Delta: intPtr(5)},
+	}
+
+	err := s.BatchUpdate(metrics)
+	assert.NoError(t, err)
+
+	gaugeValue, _ := s.GetGaugeValue("gauge1")
+	assert.Equal(t, 10.5, gaugeValue)
+
+	counterValue, _ := s.GetCounterValue("counter1")
+	assert.Equal(t, int64(5), counterValue)
+}
+
+func TestBatchUpdate_Mock(t *testing.T) {
+	type (
+		args struct {
+			metrics []models.Metrics
+		}
+		mockBehavior func(m *mocks, args args)
+	)
+	tests := []struct {
+		name         string
+		args         args
+		mockBehavior mockBehavior
+		wantErr      bool
+	}{
+		{
+			name: "Update batch Success",
+			args: args{metrics: []models.Metrics{
+				{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},
+				{MType: "counter", ID: "counter1", Delta: intPtr(5)},
+			}},
+			mockBehavior: func(m *mocks, args args) {
+				m.storage.EXPECT().BatchUpdate(args.metrics)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Update batch Error",
+			args: args{metrics: []models.Metrics{
+				{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},
+				{MType: "counter", ID: "counter1", Delta: intPtr(5)},
+			}},
+			mockBehavior: func(m *mocks, args args) {
+				m.storage.EXPECT().BatchUpdate(args.metrics).Return(fmt.Errorf("error batch update"))
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := gomock.NewController(t)
+			defer c.Finish()
+
+			m := &mocks{
+				storage: storagemock.NewMockStorage(c),
+			}
+
+			tt.mockBehavior(m, tt.args)
+			err := m.storage.BatchUpdate(tt.args.metrics)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+		})
+
+	}
+
+}
+
+func floatPtr(f float64) *float64 {
+	return &f
+}
+
+func intPtr(i int64) *int64 {
+	return &i
 }

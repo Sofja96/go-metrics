@@ -16,5 +16,4 @@ func ComputeHmac256(key []byte, data []byte) (string, error) {
 	}
 	hashedData := h.Sum(nil)
 	return hex.EncodeToString(hashedData), nil
-
 }

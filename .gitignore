@@ -10,12 +10,15 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.conf
+
 
 # Binaries
 cmd/agent/main
 cmd/agent/agent
 cmd/server/main
 cmd/server/server
+cmd/staticlint/staticlint
 
 
 # Dependency directories (remove the comment below to include it)

@@ -1,14 +1,16 @@
 package handlers
 
 import (
+	"log"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
 	middleware2 "github.com/Sofja96/go-metrics.git/internal/server/middleware"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/database"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
-	"log"
 )
 
 // APIServer - структура настроек API сервера.
@@ -71,26 +73,4 @@ func (a *APIServer) Start() error {
 	log.Println("Running server on", a.address)
 
 	return nil
-}
-
-// CreateServer - создает и настраивает новый экземпляр Echo с заданным хранилищем.
-func CreateServer(s storage.Storage) *echo.Echo {
-	var sugar zap.SugaredLogger
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-	sugar = *logger.Sugar()
-	e := echo.New()
-	e.Use(middleware2.WithLogging(sugar))
-	e.Use(middleware2.GzipMiddleware())
-	e.POST("/update/", UpdateJSON(s))
-	e.POST("/updates/", UpdatesBatch(s))
-	e.POST("/value/", ValueJSON(s))
-	e.GET("/", GetAllMetrics(s))
-	e.GET("/value/:typeM/:nameM", ValueMetric(s))
-	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
-	e.GET("/ping", Ping(s))
-	return e
 }

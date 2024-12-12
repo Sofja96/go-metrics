@@ -3,12 +3,12 @@ package memory
 import (
 	"errors"
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/models"
-	"github.com/Sofja96/go-metrics.git/internal/server/storage"
-	"io"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 )
 
 type Gauge float64
@@ -141,13 +141,22 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (s *MemStorage) BatchUpdate(w io.Writer, metrics []models.Metrics) error {
+func (s *MemStorage) BatchUpdate(metrics []models.Metrics) error {
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			s.UpdateGauge(v.ID, *v.Value)
+			_, err := s.UpdateGauge(v.ID, *v.Value)
+			if err != nil {
+				return fmt.Errorf("error update gauge for batch update: %v", err)
+			}
 		case "counter":
-			s.UpdateCounter(v.ID, *v.Delta)
+			val, err := s.UpdateCounter(v.ID, *v.Delta)
+			if err != nil {
+				return fmt.Errorf("error update counter for batch update: %v", err)
+			}
+			*v.Delta = val
+		default:
+			return fmt.Errorf("unsupported metrics type: %s", v.MType)
 
 		}
 	}
