@@ -1,11 +1,11 @@
 package metrics
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMetrics(t *testing.T) {

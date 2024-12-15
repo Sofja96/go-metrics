@@ -1,10 +1,12 @@
 package gzip
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/Sofja96/go-metrics.git/internal/models"
 	"github.com/Sofja96/go-metrics.git/internal/utils"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var compressedData = []byte{

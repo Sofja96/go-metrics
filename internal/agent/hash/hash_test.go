@@ -1,9 +1,8 @@
 package hash
 
 import (
-	//стандартные библиотеки
 	"testing"
-	//собственные модули
+
 	"github.com/stretchr/testify/require"
 )
 

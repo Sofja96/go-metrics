@@ -3,10 +3,9 @@ package memory
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"time"
-
-	"os"
 )
 
 // saveStorageToFile - функция записи данных из хранилища в файл в формате JSON.

@@ -7,9 +7,10 @@ package mock_storage
 import (
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	models "github.com/Sofja96/go-metrics.git/internal/models"
 	storage "github.com/Sofja96/go-metrics.git/internal/server/storage"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockStorage is a mock of Storage interface.

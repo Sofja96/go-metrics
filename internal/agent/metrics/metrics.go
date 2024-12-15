@@ -2,16 +2,13 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/Sofja96/go-metrics.git/internal/agent/gzip"
-	//стандартные библиотеки
 	"math/rand"
 	"runtime"
 
-	//внешние библиотеки
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
-	//собственные модули
+	"github.com/Sofja96/go-metrics.git/internal/agent/gzip"
 	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
