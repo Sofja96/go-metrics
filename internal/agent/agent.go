@@ -8,15 +8,27 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/export"
 	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
-	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // getMetrics -  собирает метрики и отправляет их в канал.
-func getMetrics(c chan<- []models.Metrics) {
-	RnMetrics := metrics.GetMetrics()
-	PsMetrics, _ := metrics.GetPSMetrics()
-	c <- RnMetrics
-	c <- PsMetrics
+func getMetrics(c chan<- []byte) {
+	m := metrics.NewMetricsCollector()
+	err := m.GetMetrics()
+	if err != nil {
+		log.Println("Error collecting runtime metrics:", err)
+	}
+	err = m.GetPSMetrics()
+	if err != nil {
+		log.Println("Error collecting system metrics:", err)
+	}
+
+	data, err := m.PrepareMetrics()
+	if err != nil {
+		log.Println("Error preparing metrics:", err)
+		return
+	}
+
+	c <- data
 }
 
 // Run -  запускает агентов для сбора и отправки метрик.
@@ -27,24 +39,26 @@ func Run() error {
 	if err != nil {
 		log.Println(err)
 	}
-	chMetrics := make(chan []models.Metrics, cfg.RateLimit)
+	chMetrics := make(chan []byte, cfg.RateLimit)
 	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
 	defer pollTicker.Stop()
 	reportTicker := time.NewTicker(time.Duration(cfg.ReportInterval) * time.Second)
 	defer reportTicker.Stop()
+
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		log.Println("runtime.GetMetrics started and Ps.metrcis")
 		for range pollTicker.C {
 			getMetrics(chMetrics)
 			log.Println("runtime.GetMetrics stoped")
 		}
-		wg.Done()
 	}()
 	for i := 0; i < cfg.RateLimit; i++ {
 		wg.Add(1)
 		workerID := i
 		go func() {
+			defer wg.Done()
 			log.Println("Report metrics started")
 			for range reportTicker.C {
 				export.PostQueries(cfg, workerID, chMetrics, &wg)
@@ -52,13 +66,18 @@ func Run() error {
 			log.Println("Report metrics stoped")
 		}()
 	}
-	go startTask(chMetrics)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		startTask(chMetrics)
+	}()
 	wg.Wait()
+	close(chMetrics)
 	return nil
 }
 
 // startTask - выполняет задачи из канала метрик.
-func startTask(taskChan chan []models.Metrics) {
+func startTask(taskChan chan []byte) {
 	for {
 		select {
 		case <-taskChan:

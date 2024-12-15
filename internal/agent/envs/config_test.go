@@ -63,7 +63,7 @@ func TestRunParameters(t *testing.T) {
 			expected: Config{
 				Address:        "localhost:6060",
 				ReportInterval: 30,
-				PollInterval:   2,
+				PollInterval:   10,
 				HashKey:        "",
 				RateLimit:      2,
 			},

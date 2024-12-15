@@ -1,9 +1,6 @@
 package export
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,8 +12,6 @@ import (
 
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
-	"github.com/Sofja96/go-metrics.git/internal/agent/metrics"
-	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Настройки повторной отправки по умолчанию.
@@ -27,9 +22,7 @@ const (
 )
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
-func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, wg *sync.WaitGroup) {
-	metrics.GetMetrics()
-	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
+func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup) {
 	log.Println("Running agent on", cfg.Address)
 	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
@@ -40,30 +33,17 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
 
-	metrics.Mu.Lock()
-	defer metrics.Mu.Unlock()
-
-	for k, v := range metrics.ValuesGauge {
-		val := v // создаем локальную переменную value
-		allMetrics = append(allMetrics, models.Metrics{
-			MType: "gauge",
-			ID:    k,
-			Value: &val, // передаем указатель на локальную переменную value
-		})
-		log.Printf("%s: %d", k, int(val))
+	for metricsBatch := range chIn {
+		err := PostBatch(retryClient, url, cfg.HashKey, metricsBatch)
+		if err != nil {
+			log.Println("Post error:", err)
+		}
+		wg.Done()
 	}
-	for k, v := range metrics.ValuesCounter {
-		val := v
-		allMetrics = append(allMetrics, models.Metrics{MType: "counter", ID: k, Delta: &val})
-		log.Printf("%s: %d", k, int(val))
-	}
-	gz, _ := compress(allMetrics)
-	postBatch(retryClient, url, cfg.HashKey, gz)
-	wg.Done()
 }
 
-// postBatch - функция отправки сжатых метрик на сервер.
-func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error {
+// PostBatch - функция отправки сжатых метрик на сервер.
+func PostBatch(r *retryablehttp.Client, url string, key string, m []byte) error {
 	req, err := retryablehttp.NewRequest("POST", url, m)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
@@ -85,34 +65,14 @@ func postBatch(r *retryablehttp.Client, url string, key string, m []byte) error 
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("server returned error status: %d", resp.StatusCode)
+	}
+
 	log.Printf("Response Status Code: %d\n", resp.StatusCode)
 	log.Printf("Response Headers: %v\n", resp.Header)
 
 	return nil
-}
-
-// compress - сжимает с помощью gzip список метрик в формате JSON.
-func compress(metrics []models.Metrics) ([]byte, error) {
-	var b bytes.Buffer
-	js, err := json.Marshal(metrics)
-	if err != nil {
-		return nil, err
-	}
-	gz, err := gzip.NewWriterLevel(&b, gzip.BestSpeed)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = gz.Write(js)
-	if err != nil {
-		return nil, err
-	}
-
-	err = gz.Close()
-	if err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
 }
 
 // linearBackoff - расчитывает время ожижания между попытками отправки
