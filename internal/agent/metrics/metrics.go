@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 
@@ -64,6 +65,8 @@ func (m *metrics) GetMetrics() error {
 	// Увеличиваем счётчик PollCount.
 	m.ValuesCounter["PollCount"]++
 
+	log.Printf("PollCount incremented: %d", m.ValuesCounter["PollCount"]) // Логируем инкремент
+
 	return nil
 }
 
@@ -95,6 +98,7 @@ func (m *metrics) PrepareMetrics() ([]byte, error) {
 			ID:    k,
 			Value: &val,
 		})
+		log.Printf("%s: %d", k, int(val))
 	}
 
 	for k, v := range m.ValuesCounter {
@@ -104,6 +108,7 @@ func (m *metrics) PrepareMetrics() ([]byte, error) {
 			ID:    k,
 			Delta: &val,
 		})
+		log.Printf("%s: %d", k, int(val))
 	}
 
 	compressedMetrics, err := gzip.Compress(allMetrics)

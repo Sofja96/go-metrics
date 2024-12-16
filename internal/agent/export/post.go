@@ -23,6 +23,7 @@ const (
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
 func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup) {
+	defer wg.Done() // Гарантируем, что wg.Done() будет вызван при завершении горутины
 	log.Println("Running agent on", cfg.Address)
 	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
@@ -33,13 +34,33 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.Wa
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
 
+	// Бесконечный цикл для обработки данных из канала
+	//for {
+	//	select {
+	//	case metricsBatch, ok := <-chIn:
+	//		if !ok {
+	//			// Канал закрыт, завершаем горутину
+	//			log.Printf("workerID %d - channel closed, terminating goroutine\n", workerID)
+	//			return
+	//		}
+	//
+	//		// Обработка метрик
+	//		err := PostBatch(retryClient, url, cfg.HashKey, metricsBatch)
+	//		if err != nil {
+	//			log.Printf("Post error in workerID %d: %v\n", workerID, err)
+	//		}
+	//	}
+	//}
+
 	for metricsBatch := range chIn {
 		err := PostBatch(retryClient, url, cfg.HashKey, metricsBatch)
 		if err != nil {
 			log.Println("Post error:", err)
 		}
-		wg.Done()
+		//wg.Done()
 	}
+	//// Уменьшаем счетчик WaitGroup после завершения обработки всех метрик
+	//wg.Done()
 }
 
 // PostBatch - функция отправки сжатых метрик на сервер.

@@ -27,7 +27,6 @@ func getMetrics(c chan<- []byte) {
 		log.Println("Error preparing metrics:", err)
 		return
 	}
-
 	c <- data
 }
 
@@ -55,6 +54,7 @@ func Run() error {
 		}
 	}()
 	for i := 0; i < cfg.RateLimit; i++ {
+		log.Println("Rate limit: ", cfg.RateLimit)
 		wg.Add(1)
 		workerID := i
 		go func() {
@@ -72,7 +72,7 @@ func Run() error {
 		startTask(chMetrics)
 	}()
 	wg.Wait()
-	close(chMetrics)
+	defer close(chMetrics)
 	return nil
 }
 
