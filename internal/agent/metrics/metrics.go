@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"runtime"
+	"sync"
 
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -17,6 +18,7 @@ import (
 type metrics struct {
 	ValuesGauge   map[string]float64 // метрики типа gauge
 	ValuesCounter map[string]int64   // метрики типа counter
+	Mu            sync.Mutex
 }
 
 // NewMetricsCollector - конструктор для создания экземпляра MetricsCollector.
@@ -28,7 +30,9 @@ func NewMetricsCollector() *metrics {
 }
 
 // GetMetrics - функция сбора метрик через runtime.MemStats а также случайного значения.
-func (m *metrics) GetMetrics() error {
+func (m *metrics) GetMetrics() ([]models.Metrics, error) {
+	//m.Mu.Lock()
+	//defer m.Mu.Unlock()
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
@@ -65,16 +69,18 @@ func (m *metrics) GetMetrics() error {
 	// Увеличиваем счётчик PollCount.
 	m.ValuesCounter["PollCount"]++
 
+	//m.Mu.Unlock()
+
 	log.Printf("PollCount incremented: %d", m.ValuesCounter["PollCount"]) // Логируем инкремент
 
-	return nil
+	return nil, nil
 }
 
 // GetPSMetrics  - функция сбора метрик через gopsutil.
-func (m *metrics) GetPSMetrics() error {
+func (m *metrics) GetPSMetrics() ([]models.Metrics, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	m.ValuesGauge["TotalMemory"] = float64(v.Total)
@@ -83,12 +89,12 @@ func (m *metrics) GetPSMetrics() error {
 
 	m.ValuesGauge["CPUutilization1"] = float64(cpu[0])
 
-	return nil
+	return nil, nil
 
 }
 
 // PrepareMetrics - преобразует собранные метрики в модели Metrics для отправки
-func (m *metrics) PrepareMetrics() ([]byte, error) {
+func PrepareMetrics(m *metrics) ([]byte, error) {
 	allMetrics := make([]models.Metrics, 0, len(m.ValuesGauge)+len(m.ValuesCounter))
 
 	for k, v := range m.ValuesGauge {

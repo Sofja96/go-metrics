@@ -12,7 +12,7 @@ func RunParameters(cfg *Config) error {
 	flag.IntVar(&cfg.ReportInterval, "r", 10, "frequency of sending metrics to the server")
 	flag.IntVar(&cfg.PollInterval, "p", 10, "frequency of polling metrics")
 	flag.StringVar(&cfg.HashKey, "k", "", "key for hash")
-	flag.IntVar(&cfg.RateLimit, "l", 1, "Rate Limit")
+	flag.IntVar(&cfg.RateLimit, "l", 2, "Rate Limit")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -25,7 +24,7 @@ const (
 func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup) {
 	defer wg.Done() // Гарантируем, что wg.Done() будет вызван при завершении горутины
 	log.Println("Running agent on", cfg.Address)
-	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
+	log.Printf("workerID: %d - SendMetricWorker started", workerID)
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
 
 	retryClient := retryablehttp.NewClient()
