@@ -156,7 +156,7 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 	ctx := context.Background()
 	tx, err := pg.DB.BeginTx(ctx, nil)
 	if err != nil {
-		log.Printf("error occured on creating tx on batchupdate: %w", err)
+		log.Printf("error occured on creating tx on batchupdate: %v", err)
 		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
 	}
 	defer tx.Rollback()
