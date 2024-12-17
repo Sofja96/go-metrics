@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -42,7 +43,7 @@ func (pg *Postgres) InitDB(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	_, err = pg.DB.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value integer);")
+	_, err = pg.DB.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value bigint);")
 	if err != nil {
 		return fmt.Errorf("error occured on creating table gauge: %w", err)
 	}
@@ -155,11 +156,13 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 	ctx := context.Background()
 	tx, err := pg.DB.BeginTx(ctx, nil)
 	if err != nil {
+		log.Printf("error occured on creating tx on batchupdate: %w", err)
 		return fmt.Errorf("error occured on creating tx on batchupdate: %w", err)
 	}
 	defer tx.Rollback()
 
 	if len(metrics) == 0 {
+		log.Println("no metrics provided")
 		return fmt.Errorf("no metrics provided")
 	}
 	for _, v := range metrics {
@@ -167,20 +170,24 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 		case "gauge":
 			_, err = pg.UpdateGauge(v.ID, *v.Value)
 			if err != nil {
+				log.Printf("error update gauge: %v", err)
 				return fmt.Errorf("error update gauge: %v", err)
 			}
 		case "counter":
 			val, err := pg.UpdateCounter(v.ID, *v.Delta)
 			if err != nil {
+				log.Printf("error update counter: %v", err)
 				return fmt.Errorf("error update counter: %v", err)
 			}
 			*v.Delta = val
 		default:
+			log.Printf("unsopperted metrics type: %s", v.MType)
 			return fmt.Errorf("unsopperted metrics type: %s", v.MType)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
+		log.Printf("failed to commit transaction: %v", err)
 		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 	return nil
