@@ -28,8 +28,9 @@ const (
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
 func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, wg *sync.WaitGroup) {
-	metrics.GetMetrics()
-	allMetrics := make([]models.Metrics, 0, len(metrics.GetMetrics()))
+	//metrics.GetMetrics()
+	defer wg.Done()
+	allMetrics := make([]models.Metrics, 0, len(metrics.ValuesGauge)+len(metrics.ValuesCounter))
 	log.Println("Running agent on", cfg.Address)
 	log.Println("workerID", strconv.Itoa(workerID), "SendMetricWorker started")
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
@@ -59,7 +60,6 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []models.Metrics, w
 	}
 	gz, _ := compress(allMetrics)
 	postBatch(retryClient, url, cfg.HashKey, gz)
-	wg.Done()
 }
 
 // postBatch - функция отправки сжатых метрик на сервер.

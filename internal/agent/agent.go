@@ -52,8 +52,12 @@ func Run() error {
 			log.Println("Report metrics stoped")
 		}()
 	}
-	go startTask(chMetrics)
+	go func() {
+		defer wg.Done()
+		startTask(chMetrics)
+	}()
 	wg.Wait()
+	defer close(chMetrics)
 	return nil
 }
 
