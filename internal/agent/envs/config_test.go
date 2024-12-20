@@ -65,7 +65,7 @@ func TestRunParameters(t *testing.T) {
 				ReportInterval: 30,
 				PollInterval:   2,
 				HashKey:        "",
-				RateLimit:      2,
+				RateLimit:      1,
 			},
 		},
 	}

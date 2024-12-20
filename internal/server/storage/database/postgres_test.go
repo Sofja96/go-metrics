@@ -781,7 +781,7 @@ func TestInitDB(t *testing.T) {
 		{
 			name: "successful initDB",
 			mockBehavior: func(mock sqlmock.Sqlmock) {
-				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value integer)`
+				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value bigint)`
 				expectedExecGauge := `CREATE TABLE IF NOT EXISTS gauge_metrics (name char(30) UNIQUE, value double precision`
 				mock.ExpectPing()
 				mock.ExpectExec(regexp.QuoteMeta(expectedExecCounter)).WillReturnResult(sqlmock.NewResult(0, 0))
@@ -792,7 +792,7 @@ func TestInitDB(t *testing.T) {
 		{
 			name: "error creating counter_metrics table",
 			mockBehavior: func(mock sqlmock.Sqlmock) {
-				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value integer)`
+				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value bigint)`
 				mock.ExpectPing()
 				mock.ExpectExec(regexp.QuoteMeta(expectedExecCounter)).
 					WillReturnError(fmt.Errorf("failed to create table counter_metrics"))
@@ -802,7 +802,7 @@ func TestInitDB(t *testing.T) {
 		{
 			name: "error creating gauge_metrics table",
 			mockBehavior: func(mock sqlmock.Sqlmock) {
-				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value integer)`
+				expectedExecCounter := `CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value bigint)`
 				expectedExecGauge := `CREATE TABLE IF NOT EXISTS gauge_metrics (name char(30) UNIQUE, value double precision`
 				mock.ExpectPing()
 				mock.ExpectExec(regexp.QuoteMeta(expectedExecCounter)).WillReturnResult(sqlmock.NewResult(0, 0))
