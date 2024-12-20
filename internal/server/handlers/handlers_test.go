@@ -21,10 +21,6 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
-//const (
-//	defaultUpdateC
-//)
-
 type mocks struct {
 	storage *storagemock.MockStorage
 	logger  zap.SugaredLogger
