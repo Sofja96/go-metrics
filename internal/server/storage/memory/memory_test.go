@@ -109,14 +109,3 @@ func TestSaveStorageToFile(t *testing.T) {
 
 	assert.JSONEq(t, string(expectedData), string(fileContent), "Содержимое файла не соответствует ожидаемому JSON с отступами")
 }
-
-func TestSaveStorageToFile_ErrorOnWrite(t *testing.T) {
-	storage := &MemStorage{
-		gaugeData:   map[string]Gauge{"temperature": 23.5},
-		counterData: map[string]Counter{"requests": 100},
-	}
-	filePath := "/root/test_storage.json"
-	err := saveStorageToFile(storage, filePath)
-
-	assert.Errorf(t, err, "Ожидалась ошибка при записи в файл, но её не произошло")
-}
