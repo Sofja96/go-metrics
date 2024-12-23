@@ -1,7 +1,12 @@
 package agent
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -41,6 +46,12 @@ func Run() error {
 		log.Println(err)
 	}
 
+	publicKey, err := LoadPublicKey(cfg.CryptoKey)
+	if err != nil {
+		return fmt.Errorf("failed to load public key: %w", err)
+	}
+	log.Println("Public key successfully loaded")
+
 	chMetrics := make(chan []byte, cfg.RateLimit)
 
 	pollTicker := time.NewTicker(time.Duration(cfg.PollInterval) * time.Second)
@@ -65,7 +76,7 @@ func Run() error {
 		go func() {
 			log.Println("Report metrics started")
 			for range reportTicker.C {
-				export.PostQueries(cfg, workerID, chMetrics, &wg)
+				export.PostQueries(cfg, workerID, chMetrics, &wg, publicKey)
 			}
 			log.Println("Report metrics stoped")
 		}()
@@ -93,4 +104,32 @@ func startTask(taskChan chan []byte) {
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+// LoadPublicKey - функция загрузки публичного ключа из файла.
+func LoadPublicKey(path string) (*rsa.PublicKey, error) {
+	if path == "" {
+		return nil, nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error reading public key file: %w", err)
+	}
+
+	block, _ := pem.Decode(data)
+	if block == nil || block.Type != "RSA PUBLIC KEY" {
+		return nil, fmt.Errorf("invalid PEM format or missing public key")
+	}
+
+	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing public key: %w", err)
+	}
+
+	rsaKey, ok := publicKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("not an RSA public key")
+	}
+
+	return rsaKey, nil
 }

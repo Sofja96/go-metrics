@@ -7,6 +7,7 @@ type Config struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`   // интервал сбора метрик
 	HashKey        string `env:"KEY"`             // ключ аутентификации
 	RateLimit      int    `env:"RATE_LIMIT"`      // ограничение на количество исходящих запросов
+	CryptoKey      string `env:"CRYPTO_KEY"`      // файл с публичным ключом сервера
 }
 
 // LoadConfig - загружает конфигурацию агента.

@@ -14,6 +14,7 @@ func ParseFlags(s *Config) {
 	flag.BoolVar(&s.Restore, "r", true, "need to load data at startup")
 	flag.StringVar(&s.DatabaseDSN, "d", "", "connect to database")
 	flag.StringVar(&s.HashKey, "k", "", "key for hash")
+	flag.StringVar(&s.CryptoKey, "crypto-key", "", "path for private key file")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
@@ -34,4 +35,9 @@ func ParseFlags(s *Config) {
 	if envRunAddr := os.Getenv("KEY"); envRunAddr != "" {
 		s.HashKey = envRunAddr
 	}
+
+	if cryptoKeyAddr := os.Getenv("CRYPTO_KEY"); cryptoKeyAddr != "" {
+		s.CryptoKey = cryptoKeyAddr
+	}
+
 }

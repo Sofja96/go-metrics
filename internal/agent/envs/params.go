@@ -13,6 +13,7 @@ func RunParameters(cfg *Config) error {
 	flag.IntVar(&cfg.PollInterval, "p", 2, "frequency of polling metrics")
 	flag.StringVar(&cfg.HashKey, "k", "", "key for hash")
 	flag.IntVar(&cfg.RateLimit, "l", 1, "Rate Limit")
+	flag.StringVar(&cfg.CryptoKey, "crypto-key", "", "path for public key file")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
@@ -32,6 +33,10 @@ func RunParameters(cfg *Config) error {
 	}
 	if cfg.RateLimit <= 0 {
 		cfg.RateLimit = 1
+	}
+
+	if cryptoKeyAddr := os.Getenv("CRYPTO_KEY"); cryptoKeyAddr != "" {
+		cfg.CryptoKey = cryptoKeyAddr
 	}
 
 	return nil

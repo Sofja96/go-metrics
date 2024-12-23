@@ -1,6 +1,9 @@
 package export
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,7 +25,7 @@ const (
 )
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
-func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup) {
+func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup, publicKey *rsa.PublicKey) {
 	defer wg.Done()
 	log.Println("workerID", workerID, "started")
 
@@ -35,7 +38,7 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.Wa
 	retryClient.Backoff = linearBackoff
 
 	for compressedData := range chIn {
-		err := PostBatch(retryClient, url, cfg.HashKey, compressedData)
+		err := PostBatch(retryClient, url, cfg.HashKey, compressedData, publicKey)
 		if err != nil {
 			log.Printf("Error posting metrics: %v", err)
 		}
@@ -43,17 +46,33 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.Wa
 }
 
 // PostBatch - функция отправки сжатых метрик на сервер.
-func PostBatch(r *retryablehttp.Client, url string, key string, m []byte) error {
-	req, err := retryablehttp.NewRequest("POST", url, m)
+func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, publicKey *rsa.PublicKey) error {
+	var dataToSend []byte
+	contentType := "application/json"
+
+	if publicKey != nil {
+		encryptedData, err := EncryptWithPublicKey(m, publicKey)
+		if err != nil {
+			return fmt.Errorf("error encrypting data: %w", err)
+		}
+		dataToSend = encryptedData
+		contentType = "application/octet-stream"
+	} else {
+		dataToSend = m
+		contentType = "application/json"
+	}
+
+	req, err := retryablehttp.NewRequest("POST", url, dataToSend)
 	if err != nil {
 		return fmt.Errorf("error connection: %w", err)
 	}
-	req.Header.Add("content-type", "application/json")
+
+	req.Header.Add("content-type", contentType)
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
 
 	if len(key) != 0 {
-		hmac, err := hash.ComputeHmac256([]byte(key), m)
+		hmac, err := hash.ComputeHmac256([]byte(key), dataToSend)
 		if err != nil {
 			return fmt.Errorf("error compute hash data: %w", err)
 		}
@@ -65,10 +84,34 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte) error 
 	}
 	defer resp.Body.Close()
 
-	log.Printf("Response Status Code: %d\n", resp.StatusCode)
-	log.Printf("Response Headers: %v\n", resp.Header)
+	log.Printf("Response Status Code: %d", resp.StatusCode)
+	log.Printf("Response Headers: %v", resp.Header)
 
 	return nil
+}
+
+// EncryptWithPublicKey - функция для шифрования данных с использованием публичного ключа RSA.
+func EncryptWithPublicKey(data []byte, publicKey *rsa.PublicKey) ([]byte, error) {
+	chunkSize := publicKey.Size() - 2*sha256.Size - 2 // Максимальный размер блока
+
+	var encryptedChunks []byte
+
+	for start := 0; start < len(data); start += chunkSize {
+		end := start + chunkSize
+		if end > len(data) {
+			end = len(data)
+		}
+		chunk := data[start:end]
+
+		encryptedChunk, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, chunk, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error encrypting chunk: %w", err)
+		}
+
+		encryptedChunks = append(encryptedChunks, encryptedChunk...)
+	}
+
+	return encryptedChunks, nil
 }
 
 // linearBackoff - расчитывает время ожижания между попытками отправки

@@ -2,6 +2,9 @@ package export
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"errors"
 	"io"
 	"net/http"
@@ -9,6 +12,8 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 func TestPostBatch(t *testing.T) {
@@ -52,7 +57,7 @@ func TestPostBatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(`{"key": "value"}`)
-			err := PostBatch(tt.client, "http://example.com", "test-key", data)
+			err := PostBatch(tt.client, "http://example.com", "test-key", data, nil)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 			} else {
@@ -77,4 +82,19 @@ type roundTripperFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func TestEncryptWithPublicKey(t *testing.T) {
+	original := []byte("test metrics data")
+	privateKey, publicKey := utils.GenerateRsaKeyPair()
+
+	encrypted, err := EncryptWithPublicKey(original, publicKey)
+	assert.NoError(t, err)
+	assert.NotNil(t, encrypted)
+	assert.NotEqual(t, original, encrypted)
+
+	decryptedData, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, encrypted, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, original, decryptedData)
 }

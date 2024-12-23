@@ -8,6 +8,7 @@ type Config struct {
 	Restore       bool   `env:"RESTORE"`           // указывает необходимость восстановить данные при старте сервера
 	DatabaseDSN   string `env:"DATABASE_DSN"`      // строка подключения к БД
 	HashKey       string `env:"KEY"`               // ключ аутентификации
+	CryptoKey     string `env:"CRYPTO_KEY"`        // файл с приватным ключом сервера
 }
 
 // LoadConfig - загружает конфигурацию сервера.
