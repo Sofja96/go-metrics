@@ -5,7 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"os"
 )
@@ -61,4 +63,25 @@ func PublicToString(key *rsa.PublicKey) (string, error) {
 
 func ExportToFile(data string, file string) error {
 	return os.WriteFile(file, []byte(data), 0644)
+}
+
+// ReadConfigFromFile - универсальная функция для чтения конфигурации из файла и ее парсинга в любой тип
+func ReadConfigFromFile[T any](filePath string) (*T, error) {
+	if filePath == "" {
+		return nil, nil
+	}
+
+	fcontent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	var config T
+
+	err = json.Unmarshal(fcontent, &config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config file: %w", err)
+	}
+
+	return &config, nil
 }

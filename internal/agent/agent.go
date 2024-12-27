@@ -40,10 +40,9 @@ func getMetrics(collector *metrics.Metrics, c chan<- []byte) {
 func Run() error {
 	var wg sync.WaitGroup
 	collector := metrics.NewMetricsCollector()
-	cfg := envs.LoadConfig()
-	err := envs.RunParameters(cfg)
+	cfg, err := envs.LoadConfig()
 	if err != nil {
-		log.Println(err)
+		log.Printf("error load config: %v", err)
 	}
 
 	publicKey, err := LoadPublicKey(cfg.CryptoKey)

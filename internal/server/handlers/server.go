@@ -23,13 +23,16 @@ type APIServer struct {
 // New - создает, инициализурет и конфигурирует новый экземпляр ApiServer.
 func New() *APIServer {
 	a := &APIServer{}
-	c := config.LoadConfig()
-	config.ParseFlags(c)
+	c, err := config.LoadConfig()
+	if err != nil {
+		log.Printf("error load config: %v", err)
+	}
 
 	a.address = c.Address
 	a.echo = echo.New()
+
 	var store storage.Storage
-	var err error
+
 	if len(c.DatabaseDSN) == 0 {
 		store, err = memory.NewInMemStorage(c.StoreInterval, c.FilePath, c.Restore)
 		if err != nil {
@@ -37,9 +40,9 @@ func New() *APIServer {
 		}
 	} else {
 		store, err = database.NewStorage(c.DatabaseDSN)
-	}
-	if err != nil {
-		log.Print(err)
+		if err != nil {
+			log.Print(err)
+		}
 	}
 
 	logger, err := zap.NewDevelopment()
