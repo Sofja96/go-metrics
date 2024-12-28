@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Sofja96/go-metrics.git/internal/models"
@@ -9,7 +10,7 @@ import (
 // Функция для создания нового подключения к базе данных для тестов
 func setupDB(b *testing.B) *Postgres {
 	dsn := "postgres://metrics:userpassword@localhost:5432/metrics"
-	db, err := NewStorage(dsn)
+	db, err := NewStorage(context.Background(), dsn)
 	if err != nil {
 		b.Fatalf("Failed to connect to database: %v", err)
 	}

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -21,7 +23,7 @@ type APIServer struct {
 }
 
 // New - создает, инициализурет и конфигурирует новый экземпляр ApiServer.
-func New() *APIServer {
+func New(ctx context.Context) *APIServer {
 	a := &APIServer{}
 	c, err := config.LoadConfig()
 	if err != nil {
@@ -34,12 +36,12 @@ func New() *APIServer {
 	var store storage.Storage
 
 	if len(c.DatabaseDSN) == 0 {
-		store, err = memory.NewInMemStorage(c.StoreInterval, c.FilePath, c.Restore)
+		store, err = memory.NewInMemStorage(ctx, c.StoreInterval, c.FilePath, c.Restore)
 		if err != nil {
 			log.Print(err)
 		}
 	} else {
-		store, err = database.NewStorage(c.DatabaseDSN)
+		store, err = database.NewStorage(ctx, c.DatabaseDSN)
 		if err != nil {
 			log.Print(err)
 		}
@@ -80,12 +82,31 @@ func New() *APIServer {
 }
 
 // Start - запускает сервер на заданном адресе.
-func (a *APIServer) Start() error {
-	err := a.echo.Start(a.address)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Running server on", a.address)
+func (a *APIServer) Start(ctx context.Context) error {
+	serverErrors := make(chan error, 1)
 
+	go func() {
+		log.Println("Starting server on", a.address)
+		if err := a.echo.Start(a.address); err != nil {
+			serverErrors <- err
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Println("Shutdown signal received, shutting down gracefully...")
+	case err := <-serverErrors:
+		log.Printf("Error starting server: %v\n", err)
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := a.echo.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Error during server shutdown: %v\n", err)
+		return err
+	}
+
+	log.Println("Server shut down gracefully")
 	return nil
 }

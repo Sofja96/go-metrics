@@ -18,7 +18,7 @@ type Postgres struct {
 }
 
 // NewStorage - создает хранилище БД
-func NewStorage(dsn string) (*Postgres, error) {
+func NewStorage(ctx context.Context, dsn string) (*Postgres, error) {
 	dbc := &Postgres{}
 
 	conn, err := sqlx.Open("postgres", dsn)
@@ -28,7 +28,7 @@ func NewStorage(dsn string) (*Postgres, error) {
 
 	dbc.DB = conn
 
-	err = dbc.InitDB(context.Background())
+	err = dbc.InitDB(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error init db: %w", err)
 	}

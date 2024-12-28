@@ -1,13 +1,16 @@
 package agent
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
@@ -40,6 +43,7 @@ func getMetrics(collector *metrics.Metrics, c chan<- []byte) {
 func Run() error {
 	var wg sync.WaitGroup
 	collector := metrics.NewMetricsCollector()
+
 	cfg, err := envs.LoadConfig()
 	if err != nil {
 		log.Printf("error load config: %v", err)
@@ -49,7 +53,6 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to load public key: %w", err)
 	}
-	log.Println("Public key successfully loaded")
 
 	chMetrics := make(chan []byte, cfg.RateLimit)
 
@@ -59,45 +62,69 @@ func Run() error {
 	reportTicker := time.NewTicker(time.Duration(cfg.ReportInterval) * time.Second)
 	defer reportTicker.Stop()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	go func() {
+		sig := <-signalChan
+		log.Printf("Получен сигнал: %s. Завершаем работу...", sig)
+		cancel()
+	}()
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Println("runtime.GetMetrics started and Ps.metrics")
-		for range pollTicker.C {
-			getMetrics(collector, chMetrics)
+		log.Println("Сбор метрик.")
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("Сбор метрик завершен.")
+				return
+			case <-pollTicker.C:
+				getMetrics(collector, chMetrics)
+			}
 		}
-		log.Println("runtime.GetMetrics stopped")
 	}()
-
 	for i := 0; i < cfg.RateLimit; i++ {
 		wg.Add(1)
 		workerID := i
-		go func() {
-			log.Println("Report metrics started")
-			for range reportTicker.C {
-				export.PostQueries(cfg, workerID, chMetrics, &wg, publicKey)
+		go func(workerId int) {
+			defer wg.Done()
+			log.Println("Отправка метрик.")
+			for {
+				select {
+				case <-ctx.Done():
+					log.Println("Отправка метрик остановлена по отмене контекста.")
+					return
+				case <-reportTicker.C:
+					export.PostQueries(ctx, cfg, workerID, chMetrics, publicKey)
+				}
 			}
-			log.Println("Report metrics stoped")
-		}()
+		}(workerID)
 	}
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		startTask(chMetrics)
+		startTask(ctx, chMetrics)
 	}()
 
 	wg.Wait()
+
 	close(chMetrics)
+	log.Println("Все метрики успешно отправлены.")
 	return nil
 }
 
 // startTask - выполняет задачи из канала метрик.
-func startTask(taskChan chan []byte) {
+func startTask(ctx context.Context, taskChan chan []byte) {
 	for {
 		select {
 		case <-taskChan:
-			log.Println("задача завершена")
+			return
+		case <-ctx.Done():
 			return
 		default:
 			time.Sleep(1 * time.Second)

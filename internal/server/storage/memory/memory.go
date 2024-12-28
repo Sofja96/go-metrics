@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -27,8 +28,11 @@ func saveStorageToFile(s *MemStorage, filePath string) error {
 }
 
 // Dump - переодически сохраняет состояние хранилища в файл в формате JSON.
-func Dump(s *MemStorage, filePath string, storeInterval int) error {
+func Dump(ctx context.Context, s *MemStorage, filePath string, storeInterval int) error {
 	dir, _ := path.Split(filePath)
+	if dir == "" {
+		dir = "."
+	}
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, 0666)
 		if err != nil {
@@ -37,13 +41,18 @@ func Dump(s *MemStorage, filePath string, storeInterval int) error {
 	}
 	pollTicker := time.NewTicker(time.Duration(storeInterval) * time.Second)
 	defer pollTicker.Stop()
-	for range pollTicker.C {
-		err := saveStorageToFile(s, filePath)
-		if err != nil {
-			return fmt.Errorf("error save data in file: %w", err)
+	for {
+		select {
+		case <-pollTicker.C:
+			err := saveStorageToFile(s, filePath)
+			if err != nil {
+				return fmt.Errorf("error save data in file: %w", err)
+			}
+		case <-ctx.Done():
+			return nil
+
 		}
 	}
-	return nil
 }
 
 // LoadStorageFromFile - загружает данные из файла в формате JSON.

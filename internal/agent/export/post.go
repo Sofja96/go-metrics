@@ -1,13 +1,13 @@
 package export
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
@@ -25,8 +25,7 @@ const (
 )
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
-func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.WaitGroup, publicKey *rsa.PublicKey) {
-	defer wg.Done()
+func PostQueries(ctx context.Context, cfg *envs.Config, workerID int, chIn <-chan []byte, publicKey *rsa.PublicKey) {
 	log.Println("workerID", workerID, "started")
 
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
@@ -37,10 +36,20 @@ func PostQueries(cfg *envs.Config, workerID int, chIn <-chan []byte, wg *sync.Wa
 	retryClient.RetryWaitMax = retryWaitMax
 	retryClient.Backoff = linearBackoff
 
-	for compressedData := range chIn {
-		err := PostBatch(retryClient, url, cfg.HashKey, compressedData, publicKey)
-		if err != nil {
-			log.Printf("Error posting metrics: %v", err)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case compressedData, ok := <-chIn:
+			if !ok {
+				log.Println("Канал данных закрыт. Завершаем Worker", workerID)
+				return
+			}
+			err := PostBatch(retryClient, url, cfg.HashKey, compressedData, publicKey)
+			if err != nil {
+				log.Printf("Ошибка отправки метрик: %v", err)
+			}
+
 		}
 	}
 }
