@@ -122,14 +122,11 @@ func Run() error {
 func startTask(ctx context.Context, taskChan chan []byte) {
 	for {
 		select {
-		case task, ok := <-taskChan:
+		case _, ok := <-taskChan:
 			if !ok {
 				return
 			}
-			log.Printf("Задача получена: %v", task)
-
 		case <-ctx.Done():
-			log.Println("Контекст отменен, завершение работы.")
 			return
 
 		default:
