@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -25,11 +26,11 @@ func (s *MemStorage) Ping() error {
 }
 
 // NewInMemStorage - создает локальное хранилище
-func NewInMemStorage(storeInterval int, filePath string, restore bool) (storage.Storage, error) {
-	return NewMemStorage(storeInterval, filePath, restore)
+func NewInMemStorage(ctx context.Context, storeInterval int, filePath string, restore bool) (storage.Storage, error) {
+	return NewMemStorage(ctx, storeInterval, filePath, restore)
 }
 
-func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorage, error) {
+func NewMemStorage(ctx context.Context, storeInterval int, filePath string, restore bool) (*MemStorage, error) {
 	s := &MemStorage{
 		gaugeData:   make(map[string]Gauge),
 		counterData: make(map[string]Counter),
@@ -46,7 +47,7 @@ func NewMemStorage(storeInterval int, filePath string, restore bool) (*MemStorag
 
 	if storeInterval != 0 {
 		go func() {
-			err := Dump(s, filePath, storeInterval)
+			err := Dump(ctx, s, filePath, storeInterval)
 			if err != nil {
 				log.Print(err)
 			}

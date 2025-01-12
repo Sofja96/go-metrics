@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os/signal"
+	"syscall"
 
 	"github.com/Sofja96/go-metrics.git/internal/server/handlers"
 )
@@ -34,9 +37,13 @@ func PrintBuildInfo() {
 }
 
 func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
+
 	PrintBuildInfo()
-	s := handlers.New()
-	if err := s.Start(); err != nil {
+	s := handlers.New(ctx)
+
+	if err := s.Start(ctx); err != nil {
 		log.Fatal(err)
 	}
 }

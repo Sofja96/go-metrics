@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 
 // ExampleUpdateJSON демонстрирует пример запроса POST к /update/
 func ExampleUpdateJSON() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 
 	e.POST("/update/", UpdateJSON(s))
@@ -35,7 +36,7 @@ func ExampleUpdateJSON() {
 
 // ExampleUpdatesBatch демонстрирует пример запроса POST к /updates/
 func ExampleUpdatesBatch() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 
 	e.POST("/updates/", UpdatesBatch(s))
@@ -56,7 +57,7 @@ func ExampleUpdatesBatch() {
 
 // ExampleValueJSON демонстрирует пример запроса POST к /value/
 func ExampleValueJSON() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.POST("/value/", ValueJSON(s))
 	_, _ = s.UpdateGauge("gauge", 15.25)
@@ -104,7 +105,7 @@ func formatHTML(html string) string {
 
 // ExampleGetAllMetrics демонстрирует пример запроса GET к /
 func ExampleGetAllMetrics() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.GET("/", GetAllMetrics(s))
 
@@ -141,7 +142,7 @@ func ExampleGetAllMetrics() {
 
 // ExampleValueMetric демонстрирует пример запроса GET к /value/:typeM/:nameM
 func ExampleValueMetric() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 
@@ -160,7 +161,7 @@ func ExampleValueMetric() {
 
 // ExampleWebhook демонстрирует пример запроса POST к /update/:typeM/:nameM/:valueM
 func ExampleWebhook() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.POST("/update/:typeM/:nameM/:valueM", Webhook(s))
 
@@ -177,7 +178,7 @@ func ExampleWebhook() {
 
 // ExamplePing демонстрирует пример запроса GET к /ping
 func ExamplePing() {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.GET("/ping", Ping(s))
 

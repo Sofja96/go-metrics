@@ -4,9 +4,11 @@ import (
 	"flag"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestRunParameters(t *testing.T) {
+func TestLoadConfig(t *testing.T) {
 	type test struct {
 		name      string
 		envVars   map[string]string
@@ -65,50 +67,64 @@ func TestRunParameters(t *testing.T) {
 				ReportInterval: 30,
 				PollInterval:   2,
 				HashKey:        "",
-				RateLimit:      2,
+				RateLimit:      1,
+			},
+		},
+		{
+			name: "LoadFileConfigSuccess",
+			envVars: map[string]string{
+				"CONFIG": "./mocks/config_test.json",
+			},
+			args: []string{},
+			expected: Config{
+				Address:        "localhost:8081",
+				ReportInterval: 1,
+				PollInterval:   1,
+				CryptoKey:      "../../public.key",
+				RateLimit:      1,
+			},
+		},
+		{
+			name: "LoadFileConfigWithFlagsEndEnvsSuccess",
+			envVars: map[string]string{
+				"CONFIG":          "./mocks/config_test.json",
+				"POLL_INTERVAL":   "5",
+				"REPORT_INTERVAL": "15",
+			},
+			args: []string{
+				"-r", "30",
+			},
+			expected: Config{
+				Address:        "localhost:8081",
+				ReportInterval: 15,
+				PollInterval:   5,
+				CryptoKey:      "../../public.key",
+				RateLimit:      1,
 			},
 		},
 	}
 
-	for i, tc := range tests {
-		for key, value := range tc.envVars {
-			os.Setenv(key, value)
-		}
-
-		flag.CommandLine = flag.NewFlagSet("test", flag.ContinueOnError)
-		os.Args = append([]string{"cmd"}, tc.args...)
-
-		cfg := &Config{}
-		err := RunParameters(cfg)
-
-		if tc.expectErr {
-			if err == nil {
-				t.Errorf("test %d: expected error but got nil", i)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			for key, value := range tc.envVars {
+				os.Setenv(key, value)
 			}
-			continue
-		} else if err != nil {
-			t.Errorf("test %d: unexpected error: %v", i, err)
-			continue
-		}
 
-		if cfg.Address != tc.expected.Address {
-			t.Errorf("test %d: expected Address to be '%s', got '%s'", i, tc.expected.Address, cfg.Address)
-		}
-		if cfg.ReportInterval != tc.expected.ReportInterval {
-			t.Errorf("test %d: expected ReportInterval to be '%d', got '%d'", i, tc.expected.ReportInterval, cfg.ReportInterval)
-		}
-		if cfg.PollInterval != tc.expected.PollInterval {
-			t.Errorf("test %d: expected PollInterval to be '%d', got '%d'", i, tc.expected.PollInterval, cfg.PollInterval)
-		}
-		if cfg.HashKey != tc.expected.HashKey {
-			t.Errorf("test %d: expected HashKey to be '%s', got '%s'", i, tc.expected.HashKey, cfg.HashKey)
-		}
-		if cfg.RateLimit != tc.expected.RateLimit {
-			t.Errorf("test %d: expected RateLimit to be '%d', got '%d'", i, tc.expected.RateLimit, cfg.RateLimit)
-		}
+			flag.CommandLine = flag.NewFlagSet("test", flag.ContinueOnError)
+			os.Args = append([]string{"cmd"}, tc.args...)
 
-		for key := range tc.envVars {
-			os.Unsetenv(key)
-		}
+			cfg, err := LoadConfig()
+			assert.NoError(t, err)
+
+			assert.Equal(t, cfg.Address, tc.expected.Address, "expected Address to be '%s', got '%s'", tc.expected.Address, cfg.Address)
+			assert.Equal(t, cfg.ReportInterval, tc.expected.ReportInterval, "expected ReportInterval to be '%d', got '%d'", tc.expected.ReportInterval, cfg.ReportInterval)
+			assert.Equal(t, cfg.PollInterval, tc.expected.PollInterval, " expected PollInterval to be '%d', got '%d'", tc.expected.PollInterval, cfg.PollInterval)
+			assert.Equal(t, cfg.HashKey, tc.expected.HashKey, "expected HashKey to be '%s', got '%s'", tc.expected.HashKey, cfg.HashKey)
+			assert.Equal(t, cfg.RateLimit, tc.expected.RateLimit, "expected RateLimit to be '%d', got '%d'", tc.expected.RateLimit, cfg.RateLimit)
+
+			for key := range tc.envVars {
+				os.Unsetenv(key)
+			}
+		})
 	}
 }

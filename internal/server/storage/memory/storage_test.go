@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func TestUpdateCounter(t *testing.T) {
-	s, _ := NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -35,7 +36,7 @@ func TestUpdateCounter(t *testing.T) {
 }
 
 func TestUpdateGauge(t *testing.T) {
-	s, _ := NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -57,13 +58,13 @@ func TestUpdateGauge(t *testing.T) {
 }
 
 func TestPing(t *testing.T) {
-	s, _ := NewMemStorage(0, "", false)
+	s, _ := NewMemStorage(context.Background(), 0, "", false)
 	err := s.Ping()
 	assert.NoError(t, err, "Ping should not return an error")
 }
 
 func TestGetCounterValue(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 	_, err := s.UpdateCounter("testCounter", 10)
 	assert.NoError(t, err)
 
@@ -76,7 +77,7 @@ func TestGetCounterValue(t *testing.T) {
 }
 
 func TestGetGaugeValue(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 	_, err := s.UpdateGauge("testGauge", 20.5)
 	assert.NoError(t, err)
 
@@ -89,7 +90,7 @@ func TestGetGaugeValue(t *testing.T) {
 }
 
 func TestGetAllCounters(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 	_, err := s.UpdateCounter("testCounter1", 5)
 	assert.NoError(t, err)
 	_, err = s.UpdateCounter("testCounter2", 15)
@@ -101,7 +102,7 @@ func TestGetAllCounters(t *testing.T) {
 }
 
 func TestGetAllGauges(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 	_, err := s.UpdateGauge("testGauge1", 10.5)
 	assert.NoError(t, err)
 	_, err = s.UpdateGauge("testGauge2", 20.5)
@@ -113,7 +114,7 @@ func TestGetAllGauges(t *testing.T) {
 }
 
 func TestGetAllMetrics(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 	_, err := s.UpdateCounter("counter1", 1)
 	assert.NoError(t, err)
 	_, err = s.UpdateGauge("gauge1", 2.2)
@@ -131,7 +132,7 @@ type mocks struct {
 }
 
 func TestUpdateGaugeData(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 
 	testCases := []struct {
 		name      string
@@ -163,7 +164,7 @@ func TestUpdateGaugeData(t *testing.T) {
 }
 
 func TestUpdateCounterData(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 
 	testCases := []struct {
 		name      string
@@ -195,7 +196,7 @@ func TestUpdateCounterData(t *testing.T) {
 }
 
 func TestBatchUpdate(t *testing.T) {
-	s, _ := NewMemStorage(300, "", false)
+	s, _ := NewMemStorage(context.Background(), 300, "", false)
 
 	metrics := []models.Metrics{
 		{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +13,7 @@ import (
 )
 
 func BenchmarkWebhook(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := Webhook(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/counter/metric1/100", nil)
@@ -26,7 +27,7 @@ func BenchmarkWebhook(b *testing.B) {
 }
 
 func BenchmarkUpdateJSON(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := UpdateJSON(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/update", bytes.NewBufferString(`{"id":"metric1","m_type":"counter","delta":100}`))
@@ -41,7 +42,7 @@ func BenchmarkUpdateJSON(b *testing.B) {
 }
 
 func BenchmarkUpdatesBatch(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := UpdatesBatch(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/batchupdate", bytes.NewBufferString(`[{"id":"metric1","m_type":"counter","delta":100}]`))
@@ -56,7 +57,7 @@ func BenchmarkUpdatesBatch(b *testing.B) {
 }
 
 func BenchmarkValueMetric(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := ValueMetric(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/value/counter/metric1", nil)
@@ -71,7 +72,7 @@ func BenchmarkValueMetric(b *testing.B) {
 }
 
 func BenchmarkValueJSON(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := ValueJSON(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/valuejson", bytes.NewBufferString(`{"id":"metric1","m_type":"counter"}`))
@@ -86,7 +87,7 @@ func BenchmarkValueJSON(b *testing.B) {
 }
 
 func BenchmarkGetAllMetrics(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := GetAllMetrics(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/allmetrics", nil)
@@ -100,7 +101,7 @@ func BenchmarkGetAllMetrics(b *testing.B) {
 }
 
 func BenchmarkPing(b *testing.B) {
-	s, _ := memory.NewMemStorage(300, "/tmp/metrics-db.json", false)
+	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	handler := Ping(s)
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
