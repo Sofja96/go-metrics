@@ -100,7 +100,8 @@ func Run() error {
 					log.Println("Отправка метрик остановлена по отмене контекста.")
 					return
 				case <-reportTicker.C:
-					export.PostQueries(ctx, cfg, workerID, chMetrics, publicKey)
+					log.Println("workerID", workerID, "started")
+					export.PostQueries(ctx, cfg, chMetrics, publicKey)
 				}
 			}
 		}(workerID)

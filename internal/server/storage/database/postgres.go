@@ -43,12 +43,14 @@ func (pg *Postgres) InitDB(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	_, err = pg.DB.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS counter_metrics (name char(30) UNIQUE, value bigint);")
+	_, err = pg.DB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS 
+    										counter_metrics (name char(30) UNIQUE, value bigint);`)
 	if err != nil {
 		return fmt.Errorf("error occured on creating table gauge: %w", err)
 	}
 
-	_, err = pg.DB.ExecContext(ctx, "CREATE TABLE IF NOT EXISTS gauge_metrics (name char(30) UNIQUE, value double precision);")
+	_, err = pg.DB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS 
+    										gauge_metrics (name char(30) UNIQUE, value double precision);`)
 	if err != nil {
 		return fmt.Errorf("error occured on creating table counter: %w", err)
 	}
@@ -69,7 +71,8 @@ func (pg *Postgres) GetGaugeValue(id string) (float64, bool) {
 
 func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 	ctx := context.Background()
-	_, err := pg.DB.ExecContext(ctx, "INSERT INTO gauge_metrics(name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
+	_, err := pg.DB.ExecContext(ctx, `INSERT INTO gauge_metrics(name, value) 
+											VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2`, name, value)
 	if err != nil {
 		return 0, fmt.Errorf("error insert gauge: %w", err)
 	}
@@ -78,7 +81,10 @@ func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
 	ctx := context.Background()
 	var newValue int64
-	raw := pg.DB.QueryRowContext(ctx, "INSERT INTO counter_metrics(name, value)VALUES ($1, $2)	ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value + $2 RETURNING value", name, value)
+	raw := pg.DB.QueryRowContext(ctx, `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) 
+                                              ON CONFLICT(name)DO UPDATE 
+                                              SET value = counter_metrics.value + $2 
+                                              RETURNING value`, name, value)
 	err := raw.Scan(&newValue)
 	if err != nil {
 		return 0, fmt.Errorf("error insert counter: %w", err)

@@ -25,9 +25,7 @@ const (
 )
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
-func PostQueries(ctx context.Context, cfg *envs.Config, workerID int, chIn <-chan []byte, publicKey *rsa.PublicKey) {
-	log.Println("workerID", workerID, "started")
-
+func PostQueries(ctx context.Context, cfg *envs.Config, chIn <-chan []byte, publicKey *rsa.PublicKey) {
 	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
 
 	retryClient := retryablehttp.NewClient()
@@ -42,7 +40,7 @@ func PostQueries(ctx context.Context, cfg *envs.Config, workerID int, chIn <-cha
 			return
 		case compressedData, ok := <-chIn:
 			if !ok {
-				log.Println("Канал данных закрыт. Завершаем Worker", workerID)
+				log.Println("Канал данных закрыт. Завершаем Worker")
 				return
 			}
 			err := PostBatch(retryClient, url, cfg.HashKey, compressedData, publicKey)
@@ -57,7 +55,7 @@ func PostQueries(ctx context.Context, cfg *envs.Config, workerID int, chIn <-cha
 // PostBatch - функция отправки сжатых метрик на сервер.
 func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, publicKey *rsa.PublicKey) error {
 	var dataToSend []byte
-	contentType := "application/json"
+	var contentType string
 
 	if publicKey != nil {
 		encryptedData, err := EncryptWithPublicKey(m, publicKey)
