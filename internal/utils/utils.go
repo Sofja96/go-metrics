@@ -87,8 +87,8 @@ func ReadConfigFromFile[T any](filePath string) (*T, error) {
 	return &config, nil
 }
 
-// GetLocalIp - возвращает локальный IP-адрес хоста
-func GetLocalIp() (string, error) {
+// GetLocalIP - возвращает локальный IP-адрес хоста
+func GetLocalIP() (string, error) {
 	iFaces, err := net.Interfaces()
 	if err != nil {
 		return "", fmt.Errorf("error getting network interfaces: %w", err)

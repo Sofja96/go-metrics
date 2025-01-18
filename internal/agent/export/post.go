@@ -78,7 +78,7 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, public
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
 
-	realIP, err := utils.GetLocalIp()
+	realIP, err := utils.GetLocalIP()
 	if err != nil {
 		return fmt.Errorf("error get local IP: %w", err)
 	}
