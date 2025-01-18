@@ -21,6 +21,7 @@ type Config struct {
 	HashKey       string `env:"KEY"`               // ключ аутентификации
 	CryptoKey     string `env:"CRYPTO_KEY"`        // файл с приватным ключом сервера
 	Config        string `env:"CONFIG"`            // файл настроки конфигурации
+	TrustedSubnet string `env:"TRUSTED_SUBNET"`    // доверенная подсеть
 }
 
 const (
@@ -36,8 +37,9 @@ type TempConfig struct {
 	StoreInterval string `json:"store_interval"`
 	FilePath      string `json:"store_file"`
 	Restore       bool   `json:"restore"`
-	DatabaseDSN   string `json:"database_dsn"`
-	CryptoKey     string `json:"crypto_key"`
+	DatabaseDSN   string `json:"database_dsn,omitempty"`
+	CryptoKey     string `json:"crypto_key,omitempty"`
+	TrustedSubnet string `json:"trusted_subnet,omitempty"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -117,6 +119,10 @@ func (cfg *Config) applyFileValues(tempConfig *TempConfig) error {
 		cfg.Restore = tempConfig.Restore
 	}
 
+	if cfg.TrustedSubnet == "" && tempConfig.TrustedSubnet != "" {
+		cfg.TrustedSubnet = tempConfig.TrustedSubnet
+	}
+
 	return nil
 }
 
@@ -139,6 +145,7 @@ func (cfg *Config) ParseFlags() {
 	flag.StringVar(&cfg.HashKey, "k", cfg.HashKey, "key for hash")
 	flag.StringVar(&cfg.CryptoKey, "crypto-key", cfg.CryptoKey, "path for public key file")
 	flag.StringVar(&cfg.Config, "c", cfg.Config, "Path to JSON config file")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "trusted subnet")
 
 	flag.Parse()
 }
