@@ -90,7 +90,6 @@ func Run() error {
 	}()
 	for i := 0; i < cfg.RateLimit; i++ {
 		wg.Add(1)
-		workerID := i
 		go func(workerId int) {
 			defer wg.Done()
 			log.Println("Отправка метрик.")
@@ -100,11 +99,11 @@ func Run() error {
 					log.Println("Отправка метрик остановлена по отмене контекста.")
 					return
 				case <-reportTicker.C:
-					log.Println("workerID", workerID, "started")
+					log.Println("workerID", workerId, "started")
 					export.PostQueries(ctx, cfg, chMetrics, publicKey)
 				}
 			}
-		}(workerID)
+		}(i)
 	}
 	wg.Add(1)
 	go func() {

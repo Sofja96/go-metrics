@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
-
 	"github.com/hashicorp/go-retryablehttp"
 
+	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 // Настройки повторной отправки по умолчанию.
@@ -78,6 +78,12 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, public
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
 
+	realIP, err := utils.GetLocalIp()
+	if err != nil {
+		return fmt.Errorf("error get local IP: %w", err)
+	}
+	req.Header.Add("X-Real-IP", realIP)
+
 	if len(key) != 0 {
 		hmac, err := hash.ComputeHmac256([]byte(key), dataToSend)
 		if err != nil {
@@ -90,6 +96,8 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, public
 		return fmt.Errorf("error connection: %w", err)
 	}
 	defer resp.Body.Close()
+
+	log.Printf("Request header: %s", req.Header)
 
 	log.Printf("Response Status Code: %d", resp.StatusCode)
 	log.Printf("Response Headers: %v", resp.Header)

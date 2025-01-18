@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"net"
 	"os"
 )
 
@@ -84,4 +85,29 @@ func ReadConfigFromFile[T any](filePath string) (*T, error) {
 	}
 
 	return &config, nil
+}
+
+// GetLocalIp - возвращает локальный IP-адрес хоста
+func GetLocalIp() (string, error) {
+	iFaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("error getting network interfaces: %w", err)
+	}
+
+	for _, iFace := range iFaces {
+		addresses, err := iFace.Addrs()
+		if err != nil {
+			return "", fmt.Errorf("error getting addresses for interface %s: %w", iFace.Name, err)
+		}
+
+		for _, addr := range addresses {
+			if ipNet, ok := addr.(*net.IPNet); ok {
+				if ipNet.IP.To4() != nil {
+					return ipNet.IP.String(), nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no valid IPv4 address found")
 }

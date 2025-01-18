@@ -70,6 +70,9 @@ func New(ctx context.Context) *APIServer {
 		a.echo.Use(middleware.HashMacMiddleware([]byte(key)))
 	}
 
+	trustedSubnet := c.TrustedSubnet
+	a.echo.Use(middleware.ValidateTrustedSubnet(trustedSubnet))
+
 	a.echo.Use(middleware.GzipMiddleware())
 	a.echo.POST("/update/", UpdateJSON(store))
 	a.echo.POST("/updates/", UpdatesBatch(store))

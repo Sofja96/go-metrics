@@ -26,6 +26,7 @@ func TestLoadConfig(t *testing.T) {
 				"RESTORE":           "false",
 				"KEY":               "test-key",
 				"CRYPTO_KEY":        "",
+				"TRUSTED_SUBNET":    "127.0.0.0/8",
 			},
 			args: []string{},
 			expected: Config{
@@ -36,6 +37,7 @@ func TestLoadConfig(t *testing.T) {
 				HashKey:       "test-key",
 				DatabaseDSN:   "",
 				CryptoKey:     "",
+				TrustedSubnet: "127.0.0.0/8",
 			},
 		},
 		{
@@ -47,6 +49,7 @@ func TestLoadConfig(t *testing.T) {
 				"-i", "10",
 				"-k", "another-key",
 				"-r=false",
+				"-t", "127.0.0.0/8",
 			},
 			expected: Config{
 				Address:       "localhost:7070",
@@ -54,6 +57,7 @@ func TestLoadConfig(t *testing.T) {
 				HashKey:       "another-key",
 				Restore:       false,
 				FilePath:      "/tmp/metrics.json",
+				TrustedSubnet: "127.0.0.0/8",
 			},
 		},
 		{
@@ -85,6 +89,7 @@ func TestLoadConfig(t *testing.T) {
 				FilePath:      "/tmp/metrics-db.json",
 				DatabaseDSN:   "",
 				CryptoKey:     "../../private.key",
+				TrustedSubnet: "127.0.0.0/8",
 			},
 		},
 		{
@@ -104,6 +109,7 @@ func TestLoadConfig(t *testing.T) {
 				CryptoKey:     "../../private.key",
 				FilePath:      "/tmp/metrics-db.json",
 				DatabaseDSN:   "",
+				TrustedSubnet: "127.0.0.0/8",
 			},
 		},
 	}
@@ -128,6 +134,7 @@ func TestLoadConfig(t *testing.T) {
 			assert.Equal(t, cfg.Restore, tc.expected.Restore, "expected Restore to be '%t', got '%t'", tc.expected.Restore, cfg.Restore)
 			assert.Equal(t, cfg.DatabaseDSN, tc.expected.DatabaseDSN, "expected DatabaseDSN to be '%s', got '%s'", tc.expected.DatabaseDSN, cfg.DatabaseDSN)
 			assert.Equal(t, cfg.CryptoKey, tc.expected.CryptoKey, "expected CryptoKey to be '%s', got '%s'", tc.expected.CryptoKey, cfg.CryptoKey)
+			assert.Equal(t, cfg.TrustedSubnet, tc.expected.TrustedSubnet, "expected TrustedSubnet to be '%s', got '%s'", tc.expected.TrustedSubnet, cfg.TrustedSubnet)
 
 			for key := range tc.envVars {
 				os.Unsetenv(key)
