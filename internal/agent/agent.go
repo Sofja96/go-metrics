@@ -68,7 +68,7 @@ func Run() error {
 	var grpcClient *export.GRPCClient
 
 	if cfg.UseGRPC {
-		grpcClient, err = export.NewGRPCClient(ctx, cfg.GrpcAddress)
+		grpcClient, err = export.NewGRPCClient(cfg.GrpcAddress)
 		if err != nil {
 			log.Printf("failed to create gRPC client: %v", err)
 			cfg.UseGRPC = false

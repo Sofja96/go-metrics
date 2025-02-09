@@ -21,8 +21,8 @@ type GRPCClient struct {
 }
 
 // NewGRPCClient creates a new gRPC client.
-func NewGRPCClient(ctx context.Context, addr string) (*GRPCClient, error) {
-	conn, err := grpc.DialContext(ctx, addr,
+func NewGRPCClient(addr string) (*GRPCClient, error) {
+	conn, err := grpc.NewClient(addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {

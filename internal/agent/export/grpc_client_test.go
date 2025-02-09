@@ -39,12 +39,10 @@ func TestNewGRPCClient_MOCK(t *testing.T) {
 }
 
 func TestNewGRPCClient(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("NewGRPCClient_SUCCESS", func(t *testing.T) {
 		addr := "localhost:50051"
 
-		client, err := NewGRPCClient(ctx, addr)
+		client, err := NewGRPCClient(addr)
 		assert.NoError(t, err)
 		assert.NotNil(t, client)
 
@@ -53,7 +51,7 @@ func TestNewGRPCClient(t *testing.T) {
 	t.Run("NewGRPCClient_ERROR", func(t *testing.T) {
 		invalidAddr := ""
 
-		client, err := NewGRPCClient(ctx, invalidAddr)
+		client, err := NewGRPCClient(invalidAddr)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to connect to gRPC server")
 		assert.Nil(t, client)
