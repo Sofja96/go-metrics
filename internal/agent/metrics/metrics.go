@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/Sofja96/go-metrics.git/internal/agent/gzip"
 	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/proto"
 )
 
 // Metrics Значения метрик типа gauge и counter.
@@ -118,4 +120,34 @@ func (m *Metrics) PrepareMetrics() ([]byte, error) {
 	}
 
 	return compressedMetrics, nil
+}
+
+// ConvertToProtoMetrics - преобразует сжатые метрики в protobuf формат.
+func ConvertToProtoMetrics(compressedData []byte) ([]*proto.Metric, error) {
+	decompressedData, err := gzip.Decompress(compressedData)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка декомпрессии метрик: %w", err)
+	}
+
+	var metrics []models.Metrics
+	err = json.Unmarshal(decompressedData, &metrics)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка преобразования JSON в модель Metrics: %w", err)
+	}
+
+	var protoMetrics []*proto.Metric
+	for _, m := range metrics {
+		protoMetric := &proto.Metric{
+			Id:   m.ID,
+			Type: m.MType,
+		}
+		if m.Delta != nil {
+			protoMetric.Delta = *m.Delta
+		}
+		if m.Value != nil {
+			protoMetric.Value = *m.Value
+		}
+		protoMetrics = append(protoMetrics, protoMetric)
+	}
+	return protoMetrics, nil
 }

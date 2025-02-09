@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"crypto/rsa"
+	"github.com/Sofja96/go-metrics.git/internal/server/grpcserver"
 	"log"
 	"time"
 
@@ -9,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
-	middleware "github.com/Sofja96/go-metrics.git/internal/server/middleware"
+	"github.com/Sofja96/go-metrics.git/internal/server/middleware"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/database"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/memory"
@@ -24,14 +26,22 @@ type APIServer struct {
 
 // New - создает, инициализурет и конфигурирует новый экземпляр ApiServer.
 func New(ctx context.Context) *APIServer {
-	a := &APIServer{}
 	c, err := config.LoadConfig()
 	if err != nil {
 		log.Printf("error load config: %v", err)
 	}
 
-	a.address = c.Address
-	a.echo = echo.New()
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	a := &APIServer{
+		echo:    echo.New(),
+		address: c.Address,
+		logger:  *logger.Sugar(),
+	}
 
 	var store storage.Storage
 
@@ -47,18 +57,12 @@ func New(ctx context.Context) *APIServer {
 		}
 	}
 
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-
-	a.logger = *logger.Sugar()
 	a.echo.Use(middleware.WithLogging(a.logger))
 
 	pkFile := c.CryptoKey
+	var privateKey *rsa.PrivateKey
 	if len(pkFile) != 0 {
-		privateKey, err := middleware.LoadPrivateKey(pkFile)
+		privateKey, err = middleware.LoadPrivateKey(pkFile)
 		if err != nil {
 			log.Fatalf("Failed to load private key: %v", err)
 		}
@@ -81,6 +85,19 @@ func New(ctx context.Context) *APIServer {
 	a.echo.GET("/value/:typeM/:nameM", ValueMetric(store))
 	a.echo.POST("/update/:typeM/:nameM/:valueM", Webhook(store))
 	a.echo.GET("/ping", Ping(store))
+
+	grpcAddress := c.GrpcAddress
+	grpcServer := &grpcserver.MetricsServer{
+		Address:       grpcAddress,
+		Logger:        &a.logger,
+		TrustedSubnet: trustedSubnet,
+		PrivateKey:    privateKey,
+		HashKey:       key,
+	}
+	if len(grpcAddress) != 0 {
+		go grpcServer.StartGRPCServer(store)
+	}
+
 	return a
 }
 

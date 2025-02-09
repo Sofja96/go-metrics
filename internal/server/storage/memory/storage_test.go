@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,7 +14,8 @@ import (
 )
 
 func TestUpdateCounter(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -28,7 +30,7 @@ func TestUpdateCounter(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			counter, err := s.UpdateCounter(test.metricsName, test.value)
+			counter, err := s.UpdateCounter(ctx, test.metricsName, test.value)
 			assert.NoError(t, err)
 			assert.Equal(t, test.result, counter)
 		})
@@ -36,7 +38,8 @@ func TestUpdateCounter(t *testing.T) {
 }
 
 func TestUpdateGauge(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "/tmp/metrics-db.json", false)
 	testCases := []struct {
 		name        string
 		metricsName string
@@ -50,7 +53,7 @@ func TestUpdateGauge(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			gauge, err := s.UpdateGauge(test.metricsName, test.value)
+			gauge, err := s.UpdateGauge(ctx, test.metricsName, test.value)
 			assert.NoError(t, err)
 			assert.Equal(t, test.result, gauge)
 		})
@@ -59,68 +62,73 @@ func TestUpdateGauge(t *testing.T) {
 
 func TestPing(t *testing.T) {
 	s, _ := NewMemStorage(context.Background(), 0, "", false)
-	err := s.Ping()
+	err := s.Ping(context.Background())
 	assert.NoError(t, err, "Ping should not return an error")
 }
 
 func TestGetCounterValue(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
-	_, err := s.UpdateCounter("testCounter", 10)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
+	_, err := s.UpdateCounter(ctx, "testCounter", 10)
 	assert.NoError(t, err)
 
-	value, ok := s.GetCounterValue("testCounter")
+	value, ok := s.GetCounterValue(ctx, "testCounter")
 	assert.True(t, ok, "GetCounterValue should return true for existing counter")
 	assert.Equal(t, int64(10), value)
 
-	_, ok = s.GetCounterValue("nonExistentCounter")
+	_, ok = s.GetCounterValue(ctx, "nonExistentCounter")
 	assert.False(t, ok, "GetCounterValue should return false for non-existing counter")
 }
 
 func TestGetGaugeValue(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
-	_, err := s.UpdateGauge("testGauge", 20.5)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
+	_, err := s.UpdateGauge(ctx, "testGauge", 20.5)
 	assert.NoError(t, err)
 
-	value, ok := s.GetGaugeValue("testGauge")
+	value, ok := s.GetGaugeValue(ctx, "testGauge")
 	assert.True(t, ok, "GetGaugeValue should return true for existing gauge")
 	assert.Equal(t, 20.5, value)
 
-	_, ok = s.GetGaugeValue("nonExistentGauge")
+	_, ok = s.GetGaugeValue(ctx, "nonExistentGauge")
 	assert.False(t, ok, "GetGaugeValue should return false for non-existing gauge")
 }
 
 func TestGetAllCounters(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
-	_, err := s.UpdateCounter("testCounter1", 5)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
+	_, err := s.UpdateCounter(ctx, "testCounter1", 5)
 	assert.NoError(t, err)
-	_, err = s.UpdateCounter("testCounter2", 15)
+	_, err = s.UpdateCounter(ctx, "testCounter2", 15)
 	assert.NoError(t, err)
 
-	counters, err := s.GetAllCounters()
+	counters, err := s.GetAllCounters(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, counters, 2)
 }
 
 func TestGetAllGauges(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
-	_, err := s.UpdateGauge("testGauge1", 10.5)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
+	_, err := s.UpdateGauge(ctx, "testGauge1", 10.5)
 	assert.NoError(t, err)
-	_, err = s.UpdateGauge("testGauge2", 20.5)
+	_, err = s.UpdateGauge(ctx, "testGauge2", 20.5)
 	assert.NoError(t, err)
 
-	gauges, err := s.GetAllGauges()
+	gauges, err := s.GetAllGauges(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, gauges, 2)
 }
 
 func TestGetAllMetrics(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
-	_, err := s.UpdateCounter("counter1", 1)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
+	_, err := s.UpdateCounter(ctx, "counter1", 1)
 	assert.NoError(t, err)
-	_, err = s.UpdateGauge("gauge1", 2.2)
+	_, err = s.UpdateGauge(ctx, "gauge1", 2.2)
 	assert.NoError(t, err)
 
-	allMetrics := s.AllMetrics()
+	allMetrics := s.AllMetrics(ctx)
 	assert.Len(t, allMetrics.Counter, 1)
 	assert.Len(t, allMetrics.Gauge, 1)
 	assert.Equal(t, Gauge(2.2), allMetrics.Gauge["gauge1"])
@@ -132,7 +140,8 @@ type mocks struct {
 }
 
 func TestUpdateGaugeData(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
 
 	testCases := []struct {
 		name      string
@@ -153,7 +162,7 @@ func TestUpdateGaugeData(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			s.UpdateGaugeData(test.inputData)
+			s.UpdateGaugeData(ctx, test.inputData)
 
 			s.mutex.Lock()
 			defer s.mutex.Unlock()
@@ -164,7 +173,8 @@ func TestUpdateGaugeData(t *testing.T) {
 }
 
 func TestUpdateCounterData(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
 
 	testCases := []struct {
 		name      string
@@ -185,7 +195,7 @@ func TestUpdateCounterData(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			s.UpdateCounterData(test.inputData)
+			s.UpdateCounterData(ctx, test.inputData)
 
 			s.mutex.Lock()
 			defer s.mutex.Unlock()
@@ -196,21 +206,35 @@ func TestUpdateCounterData(t *testing.T) {
 }
 
 func TestBatchUpdate(t *testing.T) {
-	s, _ := NewMemStorage(context.Background(), 300, "", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 300, "", false)
 
-	metrics := []models.Metrics{
-		{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},
-		{MType: "counter", ID: "counter1", Delta: intPtr(5)},
-	}
+	t.Run("BatchUpdate_SUCCESS", func(t *testing.T) {
+		metrics := []models.Metrics{
+			{MType: "gauge", ID: "gauge1", Value: floatPtr(10.5)},
+			{MType: "counter", ID: "counter1", Delta: intPtr(5)},
+		}
 
-	err := s.BatchUpdate(metrics)
-	assert.NoError(t, err)
+		err := s.BatchUpdate(ctx, metrics)
+		assert.NoError(t, err)
 
-	gaugeValue, _ := s.GetGaugeValue("gauge1")
-	assert.Equal(t, 10.5, gaugeValue)
+		gaugeValue, _ := s.GetGaugeValue(ctx, "gauge1")
+		assert.Equal(t, 10.5, gaugeValue)
 
-	counterValue, _ := s.GetCounterValue("counter1")
-	assert.Equal(t, int64(5), counterValue)
+		counterValue, _ := s.GetCounterValue(ctx, "counter1")
+		assert.Equal(t, int64(5), counterValue)
+	})
+
+	t.Run("BatchUpdate_ERROR", func(t *testing.T) {
+		metrics := []models.Metrics{
+			{MType: "gauge1", ID: "gauge1", Value: floatPtr(10.5)},
+			{MType: "counter1", ID: "counter1", Delta: intPtr(5)},
+		}
+		err := s.BatchUpdate(ctx, metrics)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "unsupported metrics type")
+
+	})
 }
 
 func TestBatchUpdate_Mock(t *testing.T) {
@@ -233,7 +257,7 @@ func TestBatchUpdate_Mock(t *testing.T) {
 				{MType: "counter", ID: "counter1", Delta: intPtr(5)},
 			}},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().BatchUpdate(args.metrics)
+				m.storage.EXPECT().BatchUpdate(gomock.Any(), args.metrics)
 			},
 			wantErr: false,
 		},
@@ -244,7 +268,7 @@ func TestBatchUpdate_Mock(t *testing.T) {
 				{MType: "counter", ID: "counter1", Delta: intPtr(5)},
 			}},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().BatchUpdate(args.metrics).Return(fmt.Errorf("error batch update"))
+				m.storage.EXPECT().BatchUpdate(gomock.Any(), args.metrics).Return(fmt.Errorf("error batch update"))
 			},
 			wantErr: true,
 		},
@@ -259,7 +283,7 @@ func TestBatchUpdate_Mock(t *testing.T) {
 			}
 
 			tt.mockBehavior(m, tt.args)
-			err := m.storage.BatchUpdate(tt.args.metrics)
+			err := m.storage.BatchUpdate(context.Background(), tt.args.metrics)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -279,4 +303,93 @@ func floatPtr(f float64) *float64 {
 
 func intPtr(i int64) *int64 {
 	return &i
+}
+
+func TestNewMemStorage(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("NewMemStorage with restore", func(t *testing.T) {
+		file, err := os.CreateTemp("", "metrics-db-test.json")
+		assert.NoError(t, err)
+		defer os.Remove(file.Name())
+
+		testData := `{"counter":{"testCounter":10},"gauge":{"testGauge":20.5}}`
+		_, err = file.WriteString(testData)
+		assert.NoError(t, err)
+		file.Close()
+
+		s, err := NewMemStorage(ctx, 0, file.Name(), true)
+		assert.NoError(t, err)
+
+		counterValue, ok := s.GetCounterValue(ctx, "testCounter")
+		assert.True(t, ok)
+		assert.Equal(t, int64(10), counterValue)
+
+		gaugeValue, ok := s.GetGaugeValue(ctx, "testGauge")
+		assert.True(t, ok)
+		assert.Equal(t, 20.5, gaugeValue)
+	})
+
+	t.Run("NewMemStorage with restore check error", func(t *testing.T) {
+		tempFile, err := os.CreateTemp("", "metrics-db-test.json")
+		assert.NoError(t, err)
+
+		_, err = tempFile.WriteString("{invalid_json}")
+		assert.NoError(t, err)
+		tempFile.Close()
+
+		s, err := NewMemStorage(ctx, 1, tempFile.Name(), true)
+		assert.Error(t, err, "failed to restore data from file")
+		assert.Nil(t, s)
+
+		os.Remove(tempFile.Name())
+		s, err = NewMemStorage(ctx, 1, tempFile.Name(), true)
+		assert.NoError(t, err, "Storage should handle missing file without error")
+		assert.NotNil(t, s)
+	})
+
+	t.Run("NewMemStorage without restore", func(t *testing.T) {
+		s, err := NewMemStorage(ctx, 0, "", false)
+		assert.NoError(t, err)
+
+		counters, err := s.GetAllCounters(ctx)
+		assert.NoError(t, err)
+		assert.Empty(t, counters)
+
+		gauges, err := s.GetAllGauges(ctx)
+		assert.NoError(t, err)
+		assert.Empty(t, gauges)
+	})
+}
+
+func TestNewInMemStorage(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("NewInMemStorage with valid parameters", func(t *testing.T) {
+		file, err := os.CreateTemp("", "metrics-db-test.json")
+		assert.NoError(t, err)
+		defer os.Remove(file.Name())
+
+		s, err := NewInMemStorage(ctx, 0, file.Name(), false)
+		assert.NoError(t, err)
+
+		assert.NotNil(t, s)
+
+		_, ok := s.(*MemStorage)
+		assert.True(t, ok)
+	})
+
+	t.Run("NewInMemStorage with invalid file path", func(t *testing.T) {
+		tempFile, err := os.CreateTemp("", "metrics-db-test.json")
+		assert.NoError(t, err)
+
+		_, err = tempFile.WriteString("{invalid_json}")
+		assert.NoError(t, err)
+		tempFile.Close()
+
+		s, err := NewInMemStorage(ctx, 0, tempFile.Name(), true)
+
+		assert.Error(t, err)
+		assert.Nil(t, s)
+	})
 }

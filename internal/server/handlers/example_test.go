@@ -57,10 +57,11 @@ func ExampleUpdatesBatch() {
 
 // ExampleValueJSON демонстрирует пример запроса POST к /value/
 func ExampleValueJSON() {
-	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := memory.NewMemStorage(ctx, 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.POST("/value/", ValueJSON(s))
-	_, _ = s.UpdateGauge("gauge", 15.25)
+	_, _ = s.UpdateGauge(ctx, "gauge", 15.25)
 
 	reqBody := `{"type":"gauge","id":"gauge"}`
 	req := httptest.NewRequest(http.MethodPost, "/value/", bytes.NewBufferString(reqBody))
@@ -105,14 +106,15 @@ func formatHTML(html string) string {
 
 // ExampleGetAllMetrics демонстрирует пример запроса GET к /
 func ExampleGetAllMetrics() {
+	ctx := context.Background()
 	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.GET("/", GetAllMetrics(s))
 
-	_, _ = s.UpdateGauge("gauge", 15.25)
-	_, _ = s.UpdateGauge("gauge1", 4.56)
-	_, _ = s.UpdateCounter("counter", 10)
-	_, _ = s.UpdateCounter("counter1", 20)
+	_, _ = s.UpdateGauge(ctx, "gauge", 15.25)
+	_, _ = s.UpdateGauge(ctx, "gauge1", 4.56)
+	_, _ = s.UpdateCounter(ctx, "counter", 10)
+	_, _ = s.UpdateCounter(ctx, "counter1", 20)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
@@ -142,11 +144,12 @@ func ExampleGetAllMetrics() {
 
 // ExampleValueMetric демонстрирует пример запроса GET к /value/:typeM/:nameM
 func ExampleValueMetric() {
+	ctx := context.Background()
 	s, _ := memory.NewMemStorage(context.Background(), 300, "/tmp/metrics-db.json", false)
 	e := echo.New()
 	e.GET("/value/:typeM/:nameM", ValueMetric(s))
 
-	_, _ = s.UpdateCounter("PollCount1", 10)
+	_, _ = s.UpdateCounter(ctx, "PollCount1", 10)
 
 	req := httptest.NewRequest(http.MethodGet, "/value/counter/PollCount1", nil)
 	rec := httptest.NewRecorder()

@@ -2,14 +2,13 @@ package middleware
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 type hashedWriter struct {
@@ -30,19 +29,11 @@ func (h *hashedWriter) Write(data []byte) (int, error) {
 }
 
 func (h *hashedWriter) hash() string {
-	return ComputeHmac256(h.k, h.b.Bytes())
-}
-
-func ComputeHmac256(key []byte, data []byte) string {
-	mac := hmac.New(sha256.New, key)
-	mac.Write(data)
-	hashedData := mac.Sum(nil)
-	return hex.EncodeToString(hashedData)
-
+	return utils.ComputeHmac256(h.k, h.b.Bytes())
 }
 
 func checkSign(key []byte, body []byte, hash string) error {
-	clientHash := ComputeHmac256(key, body)
+	clientHash := utils.ComputeHmac256(key, body)
 	if clientHash != hash {
 		return fmt.Errorf("hashes are not equal")
 	}

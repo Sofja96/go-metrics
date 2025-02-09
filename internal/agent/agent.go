@@ -65,6 +65,18 @@ func Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	var grpcClient *export.GRPCClient
+
+	if cfg.UseGRPC {
+		grpcClient, err = export.NewGRPCClient(ctx, cfg.GrpcAddress)
+		if err != nil {
+			log.Printf("failed to create gRPC client: %v", err)
+			cfg.UseGRPC = false
+			return fmt.Errorf("failed to create gRPC client: %w", err)
+		}
+		defer grpcClient.Close()
+	}
+
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
@@ -100,7 +112,7 @@ func Run() error {
 					return
 				case <-reportTicker.C:
 					log.Println("workerID", workerId, "started")
-					export.PostQueries(ctx, cfg, chMetrics, publicKey)
+					export.PostQueries(ctx, cfg, chMetrics, publicKey, grpcClient)
 				}
 			}
 		}(i)

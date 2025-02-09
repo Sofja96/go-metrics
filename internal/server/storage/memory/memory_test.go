@@ -1,16 +1,19 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadStorageFromFile(t *testing.T) {
 	filePath := "./test_data.json"
+	ctx := context.Background()
 
 	t.Run("successful load", func(t *testing.T) {
 		data := AllMetrics{
@@ -31,7 +34,7 @@ func TestLoadStorageFromFile(t *testing.T) {
 			counterData: make(map[string]Counter),
 		}
 
-		err = LoadStorageFromFile(storage, filePath)
+		err = LoadStorageFromFile(ctx, storage, filePath)
 		assert.NoError(t, err, "Ошибка при загрузке данных из файла: %v", err)
 
 		assert.Equal(t, Counter(100), storage.counterData["requests"])
@@ -43,7 +46,7 @@ func TestLoadStorageFromFile(t *testing.T) {
 			gaugeData:   make(map[string]Gauge),
 			counterData: make(map[string]Counter),
 		}
-		err := LoadStorageFromFile(storage, "./nonexistent_file.json")
+		err := LoadStorageFromFile(ctx, storage, "./nonexistent_file.json")
 		assert.Errorf(t, err, "error read and load data from file: %v", err)
 	})
 
@@ -58,7 +61,7 @@ func TestLoadStorageFromFile(t *testing.T) {
 			gaugeData:   make(map[string]Gauge),
 			counterData: make(map[string]Counter),
 		}
-		err = LoadStorageFromFile(storage, filePath)
+		err = LoadStorageFromFile(ctx, storage, filePath)
 		assert.Errorf(t, err, "error read and load data from file: %v", fmt.Errorf("json: cannot unmarshal string into Go struct field AllMetrics.Gauge of type map[string]memory.Gauge"))
 	})
 
@@ -72,7 +75,7 @@ func TestLoadStorageFromFile(t *testing.T) {
 			gaugeData:   make(map[string]Gauge),
 			counterData: make(map[string]Counter),
 		}
-		err = LoadStorageFromFile(storage, filePath)
+		err = LoadStorageFromFile(ctx, storage, filePath)
 		assert.Errorf(t, err, "Ошибка при загрузке данных из пустого файла: %v", err)
 
 		assert.Empty(t, storage.counterData)
@@ -108,4 +111,60 @@ func TestSaveStorageToFile(t *testing.T) {
 	expectedData, _ := json.MarshalIndent(expectedMetrics, "", "   ")
 
 	assert.JSONEq(t, string(expectedData), string(fileContent), "Содержимое файла не соответствует ожидаемому JSON с отступами")
+}
+
+func TestDump(t *testing.T) {
+	t.Run("Save data successfully", func(t *testing.T) {
+		storage := &MemStorage{
+			gaugeData:   map[string]Gauge{"temperature": 23.5},
+			counterData: map[string]Counter{"requests": 100},
+		}
+
+		filePath := "./test_storage.json"
+		defer os.Remove(filePath)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		err := Dump(ctx, storage, filePath, 1) // интервал 1 секунда для быстрого теста
+		assert.NoError(t, err, "error save data in file")
+	})
+
+	t.Run("Cancel context", func(t *testing.T) {
+		storage := &MemStorage{
+			gaugeData:   map[string]Gauge{"temperature": 23.5},
+			counterData: map[string]Counter{"requests": 100},
+		}
+
+		filePath := "./test_storage.json"
+		defer os.Remove(filePath)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		go func() {
+			err := Dump(ctx, storage, filePath, 1) // интервал 1 секунда для быстрого теста
+			assert.NoError(t, err, "Неожиданная ошибка при отмене контекста")
+		}()
+
+		cancel()
+
+		time.Sleep(50 * time.Millisecond)
+	})
+
+	t.Run("Error when creating directory", func(t *testing.T) {
+		storage := &MemStorage{
+			gaugeData:   map[string]Gauge{"temperature": 23.5},
+			counterData: map[string]Counter{"requests": 100},
+		}
+
+		filePath := "/invalid/path/test_storage.json"
+		defer os.Remove(filePath)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+
+		err := Dump(ctx, storage, filePath, 1)
+		assert.Error(t, err, "Ошибка создания директории должна быть возвращена")
+	})
 }

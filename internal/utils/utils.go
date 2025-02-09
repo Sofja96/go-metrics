@@ -2,9 +2,12 @@ package utils
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -110,4 +113,12 @@ func GetLocalIP() (string, error) {
 	}
 
 	return "", fmt.Errorf("no valid IPv4 address found")
+}
+
+// ComputeHmac256 - функция для вычисления HMAC-SHA256.
+func ComputeHmac256(key []byte, data []byte) string {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	hashedData := mac.Sum(nil)
+	return hex.EncodeToString(hashedData)
 }

@@ -3,7 +3,7 @@ GET http://localhost:8080
 Accept: text/html
 
 ### GET request value counter
-GET http://localhost:8080/value/counter/PollCount
+GET http://localhost:8081/value/counter/PollCount
 Accept: application/json
 
 ### GET request value gauge
@@ -85,6 +85,64 @@ Content-Type: application/json
     "delta": 2
   }
 ]
+
+### gRPC Unary Call
+GRPC localhost:3200/value/counter/PollCount
+Content-Type: application/grpc
+
+
+
+### gRPC Stream Call (если сервис поддерживает стриминг)
+GRPC localhost:3200/metrics.Metrics/GetAllMetrics
+Content-Type: application/grpc
+
+{}
+
+### Get all metrics
+GRPC localhost:3200/metrics.Metrics/GetAllMetrics
+Content-Type: application/grpc
+
+### Get single metric
+GRPC localhost:3200/metrics.Metrics/GetMetric
+Content-Type: application/grpc
+
+{
+  "type": "counter",
+  "name": "PollCount1"
+}
+
+### Update single metric
+GRPC localhost:3200/metrics.Metrics/UpdateMetric
+Content-Type: application/grpc
+
+{
+  "metric": {
+    "id": "PollCount1",
+    "type": "counter",
+    "delta": 2,
+    "value": 0
+  }
+}
+
+### Update multiple metrics
+GRPC localhost:3200/metrics.Metrics/UpdateMetrics
+Content-Type: application/grpc
+
+{
+  "metrics": [
+    {
+      "id": "HeapInuse",
+      "type": "gauge",
+      "value": 123.45
+    },
+    {
+      "id": "PollCount",
+      "type": "counter",
+      "delta": 10
+    }
+  ]
+}
+
 
 
 

@@ -58,8 +58,7 @@ func (pg *Postgres) InitDB(ctx context.Context) error {
 	return nil
 }
 
-func (pg *Postgres) GetGaugeValue(id string) (float64, bool) {
-	ctx := context.Background()
+func (pg *Postgres) GetGaugeValue(ctx context.Context, id string) (float64, bool) {
 	raw := pg.DB.QueryRowContext(ctx, "SELECT value FROM gauge_metrics WHERE name = $1", id)
 	var gm storage.GaugeMetric
 	err := raw.Scan(&gm.Value)
@@ -69,8 +68,7 @@ func (pg *Postgres) GetGaugeValue(id string) (float64, bool) {
 	return gm.Value, true
 }
 
-func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
-	ctx := context.Background()
+func (pg *Postgres) UpdateGauge(ctx context.Context, name string, value float64) (float64, error) {
 	_, err := pg.DB.ExecContext(ctx, `INSERT INTO gauge_metrics(name, value) 
 											VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2`, name, value)
 	if err != nil {
@@ -78,8 +76,7 @@ func (pg *Postgres) UpdateGauge(name string, value float64) (float64, error) {
 	}
 	return value, nil
 }
-func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
-	ctx := context.Background()
+func (pg *Postgres) UpdateCounter(ctx context.Context, name string, value int64) (int64, error) {
 	var newValue int64
 	raw := pg.DB.QueryRowContext(ctx, `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) 
                                               ON CONFLICT(name)DO UPDATE 
@@ -92,8 +89,7 @@ func (pg *Postgres) UpdateCounter(name string, value int64) (int64, error) {
 	return newValue, nil
 }
 
-func (pg *Postgres) GetCounterValue(id string) (int64, bool) {
-	ctx := context.Background()
+func (pg *Postgres) GetCounterValue(ctx context.Context, id string) (int64, bool) {
 	raw := pg.DB.QueryRowContext(ctx, "SELECT value FROM counter_metrics WHERE name = $1", id)
 	var cm storage.CounterMetric
 	err := raw.Scan(&cm.Value)
@@ -103,8 +99,7 @@ func (pg *Postgres) GetCounterValue(id string) (int64, bool) {
 	return cm.Value, true
 }
 
-func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
-	ctx := context.Background()
+func (pg *Postgres) GetAllGauges(ctx context.Context) ([]storage.GaugeMetric, error) {
 	gauges := make([]storage.GaugeMetric, 0)
 	rowsGauge, err := pg.DB.QueryContext(ctx, "SELECT name, value FROM gauge_metrics;")
 	if err != nil {
@@ -121,7 +116,7 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error scanning all gauges: %w", err)
 		}
-		_, err := pg.UpdateGauge(gm.Name, gm.Value)
+		_, err := pg.UpdateGauge(ctx, gm.Name, gm.Value)
 		if err != nil {
 			return nil, fmt.Errorf("error update gauge: %v", err)
 		}
@@ -131,9 +126,8 @@ func (pg *Postgres) GetAllGauges() ([]storage.GaugeMetric, error) {
 	return gauges, nil
 }
 
-func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
+func (pg *Postgres) GetAllCounters(ctx context.Context) ([]storage.CounterMetric, error) {
 	counters := make([]storage.CounterMetric, 0)
-	ctx := context.Background()
 	rowsCounter, err := pg.DB.QueryContext(ctx, "SELECT name, value FROM counter_metrics;")
 	if err != nil {
 		return nil, fmt.Errorf("error selecting all counter: %w", err)
@@ -149,7 +143,7 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error scanning all counter: %w", err)
 		}
-		_, err := pg.UpdateCounter(cm.Name, cm.Value)
+		_, err := pg.UpdateCounter(ctx, cm.Name, cm.Value)
 		if err != nil {
 			return nil, fmt.Errorf("error update counter: %v", err)
 		}
@@ -158,8 +152,7 @@ func (pg *Postgres) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
-	ctx := context.Background()
+func (pg *Postgres) BatchUpdate(ctx context.Context, metrics []models.Metrics) error {
 	tx, err := pg.DB.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("error occured on creating tx on batchupdate: %v", err)
@@ -174,13 +167,13 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			_, err = pg.UpdateGauge(v.ID, *v.Value)
+			_, err = pg.UpdateGauge(ctx, v.ID, *v.Value)
 			if err != nil {
 				log.Printf("error update gauge: %v", err)
 				return fmt.Errorf("error update gauge: %v", err)
 			}
 		case "counter":
-			val, err := pg.UpdateCounter(v.ID, *v.Delta)
+			val, err := pg.UpdateCounter(ctx, v.ID, *v.Delta)
 			if err != nil {
 				log.Printf("error update counter: %v", err)
 				return fmt.Errorf("error update counter: %v", err)
@@ -199,7 +192,7 @@ func (pg *Postgres) BatchUpdate(metrics []models.Metrics) error {
 	return nil
 }
 
-func (pg *Postgres) Ping() error {
+func (pg *Postgres) Ping(ctx context.Context) error {
 	err := pg.DB.Ping()
 	if err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)

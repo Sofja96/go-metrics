@@ -14,6 +14,7 @@ import (
 // Config - структура хранения настроек сервера.
 type Config struct {
 	Address       string `env:"ADDRESS"`           // адрес и порт работы сервера
+	GrpcAddress   string `env:"GRPC_ADDRESS"`      //адрес и порт для работы grpc-сервера
 	StoreInterval int    `env:"STORE_INTERVAL"`    // интервал сохранения метрик
 	FilePath      string `env:"FILE_STORAGE_PATH"` // путь к файлу хранилища
 	Restore       bool   `env:"RESTORE"`           // указывает необходимость восстановить данные при старте сервера
@@ -34,6 +35,7 @@ const (
 // TempConfig Временная структура для десериализации
 type TempConfig struct {
 	Address       string `json:"address"`
+	GrpcAddress   string `json:"grpc_address"`
 	StoreInterval string `json:"store_interval"`
 	FilePath      string `json:"store_file"`
 	Restore       bool   `json:"restore"`
@@ -95,6 +97,11 @@ func (cfg *Config) applyFileValues(tempConfig *TempConfig) error {
 	if cfg.Address == "" && tempConfig.Address != "" {
 		cfg.Address = tempConfig.Address
 	}
+
+	if cfg.GrpcAddress == "" && tempConfig.GrpcAddress != "" {
+		cfg.GrpcAddress = tempConfig.GrpcAddress
+	}
+
 	if cfg.StoreInterval == 0 && tempConfig.StoreInterval != "" {
 		duration, err := time.ParseDuration(tempConfig.StoreInterval)
 		if err != nil {
@@ -138,6 +145,7 @@ func (cfg *Config) ApplyEnvVariables() error {
 // ParseFlags - функция настройки флагов и переменных окружения сервера.
 func (cfg *Config) ParseFlags() {
 	flag.StringVar(&cfg.Address, "a", cfg.Address, "address and port to run server")
+	flag.StringVar(&cfg.GrpcAddress, "g", cfg.GrpcAddress, "address and port to run grpc-server")
 	flag.StringVar(&cfg.FilePath, "f", cfg.FilePath, "path file storage to save data")
 	flag.IntVar(&cfg.StoreInterval, "i", cfg.StoreInterval, "interval for saving metrics on the server")
 	flag.BoolVar(&cfg.Restore, "r", cfg.Restore, "need to load data at startup")
