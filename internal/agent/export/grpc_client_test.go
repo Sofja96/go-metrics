@@ -18,7 +18,6 @@ import (
 )
 
 func TestNewGRPCClient_MOCK(t *testing.T) {
-	ctx := context.Background()
 	addr := "localhost:50051"
 
 	ctrl := gomock.NewController(t)
@@ -26,7 +25,7 @@ func TestNewGRPCClient_MOCK(t *testing.T) {
 
 	mockClient := mockproto.NewMockMetricsClient(ctrl)
 
-	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.NoError(t, err)
 
 	client := &GRPCClient{
