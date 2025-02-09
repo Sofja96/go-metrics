@@ -114,8 +114,8 @@ func TestConvertToProtoMetrics(t *testing.T) {
 		assert.Contains(t, err.Error(), "ошибка декомпрессии метрик")
 	})
 	t.Run("UnmarshalError", func(t *testing.T) {
-		invalidJsonData := []byte("invalid json")
-		compressedData, err := gzip.Compress(invalidJsonData)
+		invalidJSONData := []byte("invalid json")
+		compressedData, err := gzip.Compress(invalidJSONData)
 		assert.NoError(t, err, "Ошибка при сжатии данных")
 
 		protoMetrics, err := ConvertToProtoMetrics(compressedData)
