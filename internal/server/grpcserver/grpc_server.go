@@ -21,7 +21,6 @@ import (
 type MetricsServer struct {
 	proto.UnimplementedMetricsServer
 	storage       storage.Storage
-	server        *grpc.Server
 	Address       string
 	TrustedSubnet string
 	Logger        *zap.SugaredLogger

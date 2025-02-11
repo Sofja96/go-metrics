@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"crypto/rsa"
-	"github.com/Sofja96/go-metrics.git/internal/server/grpcserver"
 	"log"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Sofja96/go-metrics.git/internal/server/config"
+	"github.com/Sofja96/go-metrics.git/internal/server/grpcserver"
 	"github.com/Sofja96/go-metrics.git/internal/server/middleware"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 	"github.com/Sofja96/go-metrics.git/internal/server/storage/database"

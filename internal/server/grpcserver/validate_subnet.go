@@ -14,7 +14,7 @@ import (
 
 // ValidateTrustedSubnetInterceptor - интерцептор для проверки доверенной подсети по заголовку X-Real-IP.
 func ValidateTrustedSubnetInterceptor(trustedSubnet string, logger *zap.SugaredLogger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if trustedSubnet == "" {
 			logger.Info("No trusted subnet configured, skipping validation.")
 			return handler(ctx, req)

@@ -17,7 +17,7 @@ import (
 
 // DecryptInterceptor - интерцептор для дешифровки данных, зашифрованных публичным ключом.
 func DecryptInterceptor(logger *zap.SugaredLogger, privateKey *rsa.PrivateKey) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if privateKey == nil {
 			logger.Info("Missing privateKey")
 			return handler(ctx, req)

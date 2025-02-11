@@ -18,7 +18,7 @@ import (
 
 // GzipInterceptor - интерцептор для обработки gzip-сжатых данных.
 func GzipInterceptor(logger *zap.SugaredLogger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			logger.Warn("Missing metadata")

@@ -13,6 +13,11 @@ import (
 	"github.com/Sofja96/go-metrics.git/internal/server/storage"
 )
 
+const (
+	counter string = "counter"
+	gauge   string = "gauge"
+)
+
 // Webhook - обработчик для обновления одной метрики.
 func Webhook(storage storage.Storage) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -22,7 +27,7 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 		metricsName := c.Param("nameM")
 		metricsValue := c.Param("valueM")
 
-		if metricsType == "counter" {
+		if metricsType == counter {
 			if value, err := strconv.ParseInt(metricsValue, 10, 64); err == nil {
 				_, err := storage.UpdateCounter(ctx, metricsName, value)
 				if err != nil {
@@ -31,7 +36,7 @@ func Webhook(storage storage.Storage) echo.HandlerFunc {
 			} else {
 				return c.String(http.StatusBadRequest, "incorrect values(int) of metric: "+metricsValue)
 			}
-		} else if metricsType == "gauge" {
+		} else if metricsType == gauge {
 			if value, err := strconv.ParseFloat(metricsValue, 64); err == nil {
 				_, err := storage.UpdateGauge(ctx, metricsName, value)
 				if err != nil {
@@ -67,12 +72,12 @@ func UpdateJSON(s storage.Storage) echo.HandlerFunc {
 			return c.String(http.StatusNotFound, "No id metric for "+metric.MType)
 		}
 		switch metric.MType {
-		case "counter":
+		case counter:
 			_, err := s.UpdateCounter(ctx, metric.ID, *metric.Delta)
 			if err != nil {
 				return err
 			}
-		case "gauge":
+		case gauge:
 			_, err := s.UpdateGauge(ctx, metric.ID, *metric.Value)
 			if err != nil {
 				return err
@@ -118,13 +123,13 @@ func ValueMetric(storage storage.Storage) echo.HandlerFunc {
 		metricsName := c.Param("nameM")
 		var v string
 		switch metricsType {
-		case "counter":
+		case counter:
 			value, ok := storage.GetCounterValue(ctx, metricsName)
 			if !ok {
 				return c.String(http.StatusNotFound, "")
 			}
 			v = fmt.Sprint(value)
-		case "gauge":
+		case gauge:
 			value, ok := storage.GetGaugeValue(ctx, metricsName)
 			if !ok {
 				return c.String(http.StatusNotFound, "")
@@ -156,13 +161,13 @@ func ValueJSON(s storage.Storage) echo.HandlerFunc {
 			return c.String(http.StatusNotFound, "No id metric for "+metric.MType)
 		}
 		switch metric.MType {
-		case "counter":
+		case counter:
 			value, ok := s.GetCounterValue(ctx, metric.ID)
 			if !ok {
 				return c.String(http.StatusNotFound, "")
 			}
 			metric.Delta = &value
-		case "gauge":
+		case gauge:
 			value, ok := s.GetGaugeValue(ctx, metric.ID)
 			if !ok {
 				return c.String(http.StatusNotFound, "")

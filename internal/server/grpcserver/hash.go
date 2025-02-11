@@ -15,7 +15,7 @@ import (
 
 // HMACInterceptor - интерцептор для проверки HMAC-подписи данных.
 func HMACInterceptor(logger *zap.SugaredLogger, key []byte) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
