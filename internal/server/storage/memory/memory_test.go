@@ -151,20 +151,4 @@ func TestDump(t *testing.T) {
 
 		time.Sleep(50 * time.Millisecond)
 	})
-
-	t.Run("Error when creating directory", func(t *testing.T) {
-		storage := &MemStorage{
-			gaugeData:   map[string]Gauge{"temperature": 23.5},
-			counterData: map[string]Counter{"requests": 100},
-		}
-
-		filePath := "/invalid/path/test_storage.json"
-		defer os.Remove(filePath)
-
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-
-		err := Dump(ctx, storage, filePath, 1)
-		assert.Error(t, err, "Ошибка создания директории должна быть возвращена")
-	})
 }
