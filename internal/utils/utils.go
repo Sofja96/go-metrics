@@ -2,13 +2,17 @@ package utils
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"log"
+	"net"
 	"os"
 )
 
@@ -84,4 +88,37 @@ func ReadConfigFromFile[T any](filePath string) (*T, error) {
 	}
 
 	return &config, nil
+}
+
+// GetLocalIP - возвращает локальный IP-адрес хоста
+func GetLocalIP() (string, error) {
+	iFaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("error getting network interfaces: %w", err)
+	}
+
+	for _, iFace := range iFaces {
+		addresses, err := iFace.Addrs()
+		if err != nil {
+			return "", fmt.Errorf("error getting addresses for interface %s: %w", iFace.Name, err)
+		}
+
+		for _, addr := range addresses {
+			if ipNet, ok := addr.(*net.IPNet); ok {
+				if ipNet.IP.To4() != nil {
+					return ipNet.IP.String(), nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no valid IPv4 address found")
+}
+
+// ComputeHmac256 - функция для вычисления HMAC-SHA256.
+func ComputeHmac256(key []byte, data []byte) string {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	hashedData := mac.Sum(nil)
+	return hex.EncodeToString(hashedData)
 }

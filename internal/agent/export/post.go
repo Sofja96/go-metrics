@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
-
 	"github.com/hashicorp/go-retryablehttp"
 
+	"github.com/Sofja96/go-metrics.git/internal/agent/envs"
 	"github.com/Sofja96/go-metrics.git/internal/agent/hash"
+	model "github.com/Sofja96/go-metrics.git/internal/agent/metrics"
+	"github.com/Sofja96/go-metrics.git/internal/models"
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 // Настройки повторной отправки по умолчанию.
@@ -25,14 +27,11 @@ const (
 )
 
 // PostQueries - функция для формирования метрик перед отправкой и запуска отправки метрик.
-func PostQueries(ctx context.Context, cfg *envs.Config, chIn <-chan []byte, publicKey *rsa.PublicKey) {
-	url := fmt.Sprintf("http://%s/updates/", cfg.Address)
-
-	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = retryMax
-	retryClient.RetryWaitMin = retryWaitMin
-	retryClient.RetryWaitMax = retryWaitMax
-	retryClient.Backoff = linearBackoff
+func PostQueries(ctx context.Context, cfg *envs.Config, chIn <-chan []byte, publicKey *rsa.PublicKey, grpcClient *GRPCClient) {
+	postRequest := models.PostRequest{
+		Key:       cfg.HashKey,
+		PublicKey: publicKey,
+	}
 
 	for {
 		select {
@@ -43,9 +42,35 @@ func PostQueries(ctx context.Context, cfg *envs.Config, chIn <-chan []byte, publ
 				log.Println("Канал данных закрыт. Завершаем Worker")
 				return
 			}
-			err := PostBatch(retryClient, url, cfg.HashKey, compressedData, publicKey)
-			if err != nil {
-				log.Printf("Ошибка отправки метрик: %v", err)
+			if !cfg.UseGRPC {
+				retryClient := retryablehttp.NewClient()
+				retryClient.RetryMax = retryMax
+				retryClient.RetryWaitMin = retryWaitMin
+				retryClient.RetryWaitMax = retryWaitMax
+				retryClient.Backoff = linearBackoff
+				url := fmt.Sprintf("http://%s/updates/", cfg.Address)
+
+				err := PostBatch(retryClient, url, compressedData, postRequest)
+				if err != nil {
+					log.Printf("Ошибка отправки метрик: %v", err)
+				}
+			} else {
+				if grpcClient == nil {
+					log.Println("gRPC клиент не инициализирован")
+					continue
+				}
+				protoMetrics, err := model.ConvertToProtoMetrics(compressedData)
+				if err != nil {
+					log.Printf("ошибка преобразования метрик: %v", err)
+					continue
+				}
+
+				_, err = grpcClient.UpdateMetrics(ctx, protoMetrics, postRequest)
+				if err != nil {
+					log.Printf("Ошибка отправки метрик через gRPC: %v", err)
+					continue
+				}
+				log.Printf("Sending gRPC request with %d metrics", len(protoMetrics))
 			}
 
 		}
@@ -53,12 +78,12 @@ func PostQueries(ctx context.Context, cfg *envs.Config, chIn <-chan []byte, publ
 }
 
 // PostBatch - функция отправки сжатых метрик на сервер.
-func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, publicKey *rsa.PublicKey) error {
+func PostBatch(r *retryablehttp.Client, url string, m []byte, post models.PostRequest) error {
 	var dataToSend []byte
 	var contentType string
 
-	if publicKey != nil {
-		encryptedData, err := EncryptWithPublicKey(m, publicKey)
+	if post.PublicKey != nil {
+		encryptedData, err := EncryptWithPublicKey(m, post.PublicKey)
 		if err != nil {
 			return fmt.Errorf("error encrypting data: %w", err)
 		}
@@ -78,8 +103,14 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, public
 	req.Header.Add("content-encoding", "gzip")
 	req.Header.Add("Accept-Encoding", "gzip")
 
-	if len(key) != 0 {
-		hmac, err := hash.ComputeHmac256([]byte(key), dataToSend)
+	realIP, err := utils.GetLocalIP()
+	if err != nil {
+		return fmt.Errorf("error get local IP: %w", err)
+	}
+	req.Header.Add("X-Real-IP", realIP)
+
+	if len(post.Key) != 0 {
+		hmac, err := hash.ComputeHmac256([]byte(post.Key), dataToSend)
 		if err != nil {
 			return fmt.Errorf("error compute hash data: %w", err)
 		}
@@ -90,6 +121,8 @@ func PostBatch(r *retryablehttp.Client, url string, key string, m []byte, public
 		return fmt.Errorf("error connection: %w", err)
 	}
 	defer resp.Body.Close()
+
+	log.Printf("Request header: %s", req.Header)
 
 	log.Printf("Response Status Code: %d", resp.StatusCode)
 	log.Printf("Response Headers: %v", resp.Header)

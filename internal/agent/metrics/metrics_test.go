@@ -3,10 +3,12 @@ package metrics
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/Sofja96/go-metrics.git/internal/agent/gzip"
+	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 func TestNewMetrics(t *testing.T) {
@@ -56,4 +58,70 @@ func TestGetPSMetrics(t *testing.T) {
 	assert.Equal(t, m.ValuesGauge["TotalMemory"], float64(memStat.Total))
 	assert.Equal(t, m.ValuesGauge["FreeMemory"], float64(memStat.Free))
 	assert.Equal(t, m.ValuesGauge["CPUutilization1"], float64(cpuPercent[0]))
+}
+
+func TestPrepareMetrics(t *testing.T) {
+	collector := NewMetricsCollector()
+	err := collector.GetMetrics()
+	assert.NoError(t, err)
+
+	err = func() error {
+		collector.ValuesGauge["test_gauge"] = 123.45
+		collector.ValuesCounter["test_counter"] = 10
+		return nil
+	}()
+	assert.NoError(t, err)
+
+	compressedData, err := collector.PrepareMetrics()
+	assert.NoError(t, err, "Ошибка при подготовке метрик")
+	assert.NotEmpty(t, compressedData, "Данные не должны быть пустыми")
+}
+
+func TestConvertToProtoMetrics(t *testing.T) {
+	originalMetrics := []models.Metrics{
+		{
+			ID:    "metric1",
+			MType: "counter",
+			Delta: new(int64),
+			Value: nil,
+		},
+		{
+			ID:    "metric2",
+			MType: "gauge",
+			Delta: nil,
+			Value: new(float64),
+		},
+	}
+
+	compressedData, err := gzip.Compress(originalMetrics)
+	assert.NoError(t, err, "Ошибка при сжатии данных")
+
+	t.Run("Success", func(t *testing.T) {
+		protoMetrics, err := ConvertToProtoMetrics(compressedData)
+
+		assert.NoError(t, err)
+		assert.Len(t, protoMetrics, len(originalMetrics))
+		assert.Equal(t, protoMetrics[0].Id, originalMetrics[0].ID)
+		assert.Equal(t, protoMetrics[1].Type, originalMetrics[1].MType)
+	})
+
+	t.Run("DecompressionError", func(t *testing.T) {
+		invalidData := []byte("invalid json")
+		protoMetrics, err := ConvertToProtoMetrics(invalidData)
+
+		assert.Error(t, err)
+		assert.Nil(t, protoMetrics)
+		assert.Contains(t, err.Error(), "ошибка декомпрессии метрик")
+	})
+	t.Run("UnmarshalError", func(t *testing.T) {
+		invalidJSONData := []byte("invalid json")
+		compressedData, err := gzip.Compress(invalidJSONData)
+		assert.NoError(t, err, "Ошибка при сжатии данных")
+
+		protoMetrics, err := ConvertToProtoMetrics(compressedData)
+		assert.Error(t, err)
+		assert.Nil(t, protoMetrics)
+
+		assert.Contains(t, err.Error(), "ошибка преобразования JSON в модель Metrics")
+	})
 }

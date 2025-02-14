@@ -4,5 +4,6 @@
   "store_interval": "1s",
   "store_file": "/tmp/metrics-db.json",
   "database_dsn": "",
-  "crypto_key": "../../private.key"
+  "crypto_key": "../../private.key",
+  "trusted_subnet": "127.0.0.0/8"
 }

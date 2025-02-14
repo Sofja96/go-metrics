@@ -8,46 +8,51 @@ import (
 )
 
 func BenchmarkUpdateCounter(b *testing.B) {
-	s, _ := NewMemStorage(context.Background(), 0, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 0, "/tmp/metrics-db.json", false)
 	for i := 0; i < b.N; i++ {
-		s.UpdateCounter("test_counter", 1)
+		s.UpdateCounter(ctx, "test_counter", 1)
 	}
 }
 
 func BenchmarkUpdateGauge(b *testing.B) {
-	s, _ := NewMemStorage(context.Background(), 0, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 0, "/tmp/metrics-db.json", false)
 	for i := 0; i < b.N; i++ {
-		s.UpdateGauge("test_gauge", 1.23)
+		s.UpdateGauge(ctx, "test_gauge", 1.23)
 	}
 }
 
 func BenchmarkGetCounterValue(b *testing.B) {
-	s, _ := NewMemStorage(context.Background(), 0, "/tmp/metrics-db.json", false)
-	s.UpdateCounter("test_counter", 1)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 0, "/tmp/metrics-db.json", false)
+	s.UpdateCounter(ctx, "test_counter", 1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.GetCounterValue("test_counter")
+		s.GetCounterValue(ctx, "test_counter")
 	}
 }
 
 func BenchmarkGetGaugeValue(b *testing.B) {
-	s, _ := NewMemStorage(context.Background(), 0, "/tmp/metrics-db.json", false)
-	s.UpdateGauge("test_gauge", 1.23)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 0, "/tmp/metrics-db.json", false)
+	s.UpdateGauge(ctx, "test_gauge", 1.23)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.GetGaugeValue("test_gauge")
+		s.GetGaugeValue(ctx, "test_gauge")
 	}
 }
 
 func BenchmarkBatchUpdate(b *testing.B) {
-	s, _ := NewMemStorage(context.Background(), 0, "/tmp/metrics-db.json", false)
+	ctx := context.Background()
+	s, _ := NewMemStorage(ctx, 0, "/tmp/metrics-db.json", false)
 	metrics := []models.Metrics{
 		{MType: "gauge", ID: "test_gauge", Value: float64Ptr(1.23)},
 		{MType: "counter", ID: "test_counter", Delta: int64Ptr(1)},
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.BatchUpdate(metrics)
+		s.BatchUpdate(ctx, metrics)
 	}
 }
 

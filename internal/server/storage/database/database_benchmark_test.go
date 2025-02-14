@@ -21,7 +21,7 @@ func BenchmarkUpdateCounter(b *testing.B) {
 	db := setupDB(b)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := db.UpdateCounter("test_counter", 1)
+		_, err := db.UpdateCounter(context.Background(), "test_counter", 1)
 		if err != nil {
 			b.Fatalf("Failed to update counter: %v", err)
 		}
@@ -32,7 +32,7 @@ func BenchmarkUpdateGauge(b *testing.B) {
 	db := setupDB(b)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := db.UpdateGauge("test_gauge", 1.23)
+		_, err := db.UpdateGauge(context.Background(), "test_gauge", 1.23)
 		if err != nil {
 			b.Fatalf("Failed to update gauge: %v", err)
 		}
@@ -41,13 +41,13 @@ func BenchmarkUpdateGauge(b *testing.B) {
 
 func BenchmarkGetCounterValue(b *testing.B) {
 	db := setupDB(b)
-	_, err := db.UpdateCounter("test_counter", 1)
+	_, err := db.UpdateCounter(context.Background(), "test_counter", 1)
 	if err != nil {
 		b.Fatalf("Failed to setup counter: %v", err)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, ok := db.GetCounterValue("test_counter")
+		_, ok := db.GetCounterValue(context.Background(), "test_counter")
 		if !ok {
 			b.Fatalf("Failed to get counter value")
 		}
@@ -56,13 +56,13 @@ func BenchmarkGetCounterValue(b *testing.B) {
 
 func BenchmarkGetGaugeValue(b *testing.B) {
 	db := setupDB(b)
-	_, err := db.UpdateGauge("test_gauge", 1.23)
+	_, err := db.UpdateGauge(context.Background(), "test_gauge", 1.23)
 	if err != nil {
 		b.Fatalf("Failed to setup gauge: %v", err)
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, ok := db.GetGaugeValue("test_gauge")
+		_, ok := db.GetGaugeValue(context.Background(), "test_gauge")
 		if !ok {
 			b.Fatalf("Failed to get gauge value")
 		}
@@ -77,7 +77,7 @@ func BenchmarkBatchUpdate(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err := db.BatchUpdate(metrics)
+		err := db.BatchUpdate(context.Background(), metrics)
 		if err != nil {
 			b.Fatalf("Failed to batch update: %v", err)
 		}

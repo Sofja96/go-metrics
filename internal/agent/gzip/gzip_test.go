@@ -1,8 +1,10 @@
 package gzip
 
 import (
+	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Sofja96/go-metrics.git/internal/models"
@@ -49,4 +51,20 @@ func TestCompress(t *testing.T) {
 
 		})
 	}
+}
+
+func TestDecompress(t *testing.T) {
+	originalData := []byte("test data")
+
+	compressedData, err := Compress(originalData)
+	assert.NoError(t, err, "Ошибка при сжатии данных")
+
+	decompressedData, err := Decompress(compressedData)
+	assert.NoError(t, err, "Ошибка при декомпрессии данных")
+
+	var unmarshalledData []byte
+	err = json.Unmarshal(decompressedData, &unmarshalledData)
+	assert.NoError(t, err, "Ошибка при преобразовании данных из JSON")
+
+	assert.Equal(t, originalData, unmarshalledData, "Декомпрессированные данные не совпадают с оригинальными")
 }

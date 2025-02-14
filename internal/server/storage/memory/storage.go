@@ -21,7 +21,7 @@ type MemStorage struct {
 	mutex       sync.RWMutex
 }
 
-func (s *MemStorage) Ping() error {
+func (s *MemStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
@@ -37,7 +37,7 @@ func NewMemStorage(ctx context.Context, storeInterval int, filePath string, rest
 	}
 
 	if restore {
-		err := LoadStorageFromFile(s, filePath)
+		err := LoadStorageFromFile(ctx, s, filePath)
 		if err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				return nil, fmt.Errorf("failed to restore data from file: %w", err)
@@ -57,7 +57,7 @@ func NewMemStorage(ctx context.Context, storeInterval int, filePath string, rest
 
 }
 
-func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
+func (s *MemStorage) UpdateCounter(ctx context.Context, name string, value int64) (int64, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -65,7 +65,7 @@ func (s *MemStorage) UpdateCounter(name string, value int64) (int64, error) {
 	return int64(s.counterData[name]), nil
 }
 
-func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
+func (s *MemStorage) UpdateGauge(ctx context.Context, name string, value float64) (float64, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -73,7 +73,7 @@ func (s *MemStorage) UpdateGauge(name string, value float64) (float64, error) {
 	return float64(s.gaugeData[name]), nil
 }
 
-func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
+func (s *MemStorage) GetCounterValue(ctx context.Context, id string) (int64, bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -81,7 +81,7 @@ func (s *MemStorage) GetCounterValue(id string) (int64, bool) {
 	return int64(val), ok
 }
 
-func (s *MemStorage) GetGaugeValue(id string) (float64, bool) {
+func (s *MemStorage) GetGaugeValue(ctx context.Context, id string) (float64, bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -94,7 +94,7 @@ type AllMetrics struct {
 	Counter map[string]Counter
 }
 
-func (s *MemStorage) AllMetrics() *AllMetrics {
+func (s *MemStorage) AllMetrics(ctx context.Context) *AllMetrics {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -104,21 +104,21 @@ func (s *MemStorage) AllMetrics() *AllMetrics {
 	}
 }
 
-func (s *MemStorage) UpdateGaugeData(gaugeData map[string]Gauge) {
+func (s *MemStorage) UpdateGaugeData(ctx context.Context, gaugeData map[string]Gauge) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.gaugeData = gaugeData
 }
 
-func (s *MemStorage) UpdateCounterData(counterData map[string]Counter) {
+func (s *MemStorage) UpdateCounterData(ctx context.Context, counterData map[string]Counter) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	s.counterData = counterData
 }
 
-func (s *MemStorage) GetAllGauges() ([]storage.GaugeMetric, error) {
+func (s *MemStorage) GetAllGauges(ctx context.Context) ([]storage.GaugeMetric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -130,7 +130,7 @@ func (s *MemStorage) GetAllGauges() ([]storage.GaugeMetric, error) {
 }
 
 // GetAllCounters returns all counter metrics.
-func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
+func (s *MemStorage) GetAllCounters(ctx context.Context) ([]storage.CounterMetric, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -142,16 +142,16 @@ func (s *MemStorage) GetAllCounters() ([]storage.CounterMetric, error) {
 	return counters, nil
 }
 
-func (s *MemStorage) BatchUpdate(metrics []models.Metrics) error {
+func (s *MemStorage) BatchUpdate(ctx context.Context, metrics []models.Metrics) error {
 	for _, v := range metrics {
 		switch v.MType {
 		case "gauge":
-			_, err := s.UpdateGauge(v.ID, *v.Value)
+			_, err := s.UpdateGauge(ctx, v.ID, *v.Value)
 			if err != nil {
 				return fmt.Errorf("error update gauge for batch update: %v", err)
 			}
 		case "counter":
-			val, err := s.UpdateCounter(v.ID, *v.Delta)
+			val, err := s.UpdateCounter(ctx, v.ID, *v.Delta)
 			if err != nil {
 				return fmt.Errorf("error update counter for batch update: %v", err)
 			}

@@ -55,7 +55,7 @@ func TestWebhook(t *testing.T) {
 				metricsValueCounter: 10,
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().UpdateCounter(args.metricsName, args.metricsValueCounter).Return(int64(10), nil)
+				m.storage.EXPECT().UpdateCounter(gomock.Any(), args.metricsName, args.metricsValueCounter).Return(int64(10), nil)
 			},
 			expectedStatusCode: http.StatusOK,
 		},
@@ -68,7 +68,7 @@ func TestWebhook(t *testing.T) {
 				metricValueGauge: 13.123,
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().UpdateGauge(args.metricsName, args.metricValueGauge).Return(13.123, nil)
+				m.storage.EXPECT().UpdateGauge(gomock.Any(), args.metricsName, args.metricValueGauge).Return(13.123, nil)
 			},
 			expectedStatusCode: http.StatusOK,
 		},
@@ -125,7 +125,7 @@ func TestWebhook(t *testing.T) {
 				metricsValueCounter: 10,
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().UpdateCounter(args.metricsName, args.metricsValueCounter).Return(int64(10), fmt.Errorf("error insert counter"))
+				m.storage.EXPECT().UpdateCounter(gomock.Any(), args.metricsName, args.metricsValueCounter).Return(int64(10), fmt.Errorf("error insert counter"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedResponse:   "{\"message\":\"Internal Server Error\"}\n",
@@ -139,7 +139,7 @@ func TestWebhook(t *testing.T) {
 				metricValueGauge: 13.123,
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().UpdateGauge(args.metricsName, args.metricValueGauge).Return(13.123, fmt.Errorf("error insert gauge"))
+				m.storage.EXPECT().UpdateGauge(gomock.Any(), args.metricsName, args.metricValueGauge).Return(13.123, fmt.Errorf("error insert gauge"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedResponse:   "{\"message\":\"Internal Server Error\"}\n",
@@ -205,7 +205,7 @@ func TestValueMetric(t *testing.T) {
 				metricsName: "PollCount1",
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetCounterValue(args.metricsName).Return(int64(10), true)
+				m.storage.EXPECT().GetCounterValue(gomock.Any(), args.metricsName).Return(int64(10), true)
 			},
 			method:             http.MethodGet,
 			expectedStatusCode: http.StatusOK,
@@ -218,7 +218,7 @@ func TestValueMetric(t *testing.T) {
 				metricsName: "Alloc1",
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetGaugeValue(args.metricsName).Return(10.25, true)
+				m.storage.EXPECT().GetGaugeValue(gomock.Any(), args.metricsName).Return(10.25, true)
 			},
 			method:             http.MethodGet,
 			expectedStatusCode: http.StatusOK,
@@ -239,7 +239,7 @@ func TestValueMetric(t *testing.T) {
 				metricsName: "unknown",
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetCounterValue(args.metricsName).Return(int64(0), false)
+				m.storage.EXPECT().GetCounterValue(gomock.Any(), args.metricsName).Return(int64(0), false)
 			},
 			expectedStatusCode: http.StatusNotFound,
 			expectedBody:       "",
@@ -251,7 +251,7 @@ func TestValueMetric(t *testing.T) {
 				metricsName: "unknown",
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetGaugeValue(args.metricsName).Return(float64(0), false)
+				m.storage.EXPECT().GetGaugeValue(gomock.Any(), args.metricsName).Return(float64(0), false)
 			},
 			expectedStatusCode: http.StatusNotFound,
 			expectedBody:       "",
@@ -314,11 +314,11 @@ func TestGetAllMetrics(t *testing.T) {
 				},
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetAllGauges().Return([]storage.GaugeMetric{
+				m.storage.EXPECT().GetAllGauges(gomock.Any()).Return([]storage.GaugeMetric{
 					{Name: "gauge1", Value: 1.23},
 					{Name: "gauge2", Value: 4.56},
 				}, nil)
-				m.storage.EXPECT().GetAllCounters().Return([]storage.CounterMetric{
+				m.storage.EXPECT().GetAllCounters(gomock.Any()).Return([]storage.CounterMetric{
 					{Name: "counter1", Value: 10},
 					{Name: "counter2", Value: 20},
 				}, nil)
@@ -344,7 +344,7 @@ func TestGetAllMetrics(t *testing.T) {
 				},
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetAllGauges().Return(nil, errors.New("error get all gauges metrics"))
+				m.storage.EXPECT().GetAllGauges(gomock.Any()).Return(nil, errors.New("error get all gauges metrics"))
 			},
 			expectedStatusCode:   http.StatusInternalServerError,
 			expectedResponseBody: "",
@@ -359,11 +359,11 @@ func TestGetAllMetrics(t *testing.T) {
 				getAllCounters: []storage.CounterMetric{},
 			},
 			mockBehavior: func(m *mocks, args args) {
-				m.storage.EXPECT().GetAllGauges().Return([]storage.GaugeMetric{
+				m.storage.EXPECT().GetAllGauges(gomock.Any()).Return([]storage.GaugeMetric{
 					{Name: "gauge1", Value: 1.23},
 					{Name: "gauge2", Value: 4.56},
 				}, nil)
-				m.storage.EXPECT().GetAllCounters().Return(nil, errors.New("error get counters gauges metrics"))
+				m.storage.EXPECT().GetAllCounters(gomock.Any()).Return(nil, errors.New("error get counters gauges metrics"))
 			},
 			expectedStatusCode:   http.StatusInternalServerError,
 			expectedResponseBody: "",
@@ -424,7 +424,7 @@ func TestValueJSON(t *testing.T) {
 				Value: nil,
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().GetCounterValue(args.ID).Return(int64(2), true)
+				m.storage.EXPECT().GetCounterValue(gomock.Any(), args.ID).Return(int64(2), true)
 			},
 			expectedResponseBody: strings.NewReplacer("\n", "", " ", "").
 				Replace(utils.GetDataFromFile("./mocks/responses/get_counter_ok.json").String()),
@@ -441,7 +441,7 @@ func TestValueJSON(t *testing.T) {
 				Value: utils.FloatPtr(13.175),
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().GetGaugeValue(args.ID).Return(13.175, true)
+				m.storage.EXPECT().GetGaugeValue(gomock.Any(), args.ID).Return(13.175, true)
 			},
 			expectedResponseBody: strings.NewReplacer("\n", "", " ", "").
 				Replace(utils.GetDataFromFile("./mocks/responses/get_gauge_ok.json").String()),
@@ -491,7 +491,7 @@ func TestValueJSON(t *testing.T) {
 				Value: nil,
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().GetCounterValue(args.ID).Return(int64(0), false)
+				m.storage.EXPECT().GetCounterValue(gomock.Any(), args.ID).Return(int64(0), false)
 			},
 			contentType:          "application/json",
 			expectedStatusCode:   http.StatusNotFound,
@@ -507,7 +507,7 @@ func TestValueJSON(t *testing.T) {
 				Value: nil,
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().GetGaugeValue(args.ID).Return(float64(0), false)
+				m.storage.EXPECT().GetGaugeValue(gomock.Any(), args.ID).Return(float64(0), false)
 			},
 			contentType:          "application/json",
 			expectedStatusCode:   http.StatusNotFound,
@@ -566,7 +566,7 @@ func TestUpdateJSON(t *testing.T) {
 				Value: nil,
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().UpdateCounter(args.ID, *args.Delta).Return(int64(2), nil)
+				m.storage.EXPECT().UpdateCounter(gomock.Any(), args.ID, *args.Delta).Return(int64(2), nil)
 			},
 			expectedResponseBody: strings.NewReplacer("\n", "", " ", "").
 				Replace(utils.GetDataFromFile("./mocks/responses/update_counter_json_ok.json").String()),
@@ -583,7 +583,7 @@ func TestUpdateJSON(t *testing.T) {
 				Value: nil,
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().UpdateCounter(args.ID, *args.Delta).Return(int64(0), errors.New("error update counter value"))
+				m.storage.EXPECT().UpdateCounter(gomock.Any(), args.ID, *args.Delta).Return(int64(0), errors.New("error update counter value"))
 			},
 			expectedResponseBody: "{\"message\":\"Internal Server Error\"}",
 			expectedStatusCode:   http.StatusInternalServerError,
@@ -599,7 +599,7 @@ func TestUpdateJSON(t *testing.T) {
 				Value: utils.FloatPtr(13.175),
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().UpdateGauge(args.ID, *args.Value).Return(13.175, nil)
+				m.storage.EXPECT().UpdateGauge(gomock.Any(), args.ID, *args.Value).Return(13.175, nil)
 			},
 			expectedResponseBody: strings.NewReplacer("\n", "", " ", "").
 				Replace(utils.GetDataFromFile("./mocks/responses/update_gauge_json_ok.json").String()),
@@ -616,7 +616,7 @@ func TestUpdateJSON(t *testing.T) {
 				Value: utils.FloatPtr(13.175),
 			},
 			mockBehavior: func(m *mocks, args models.Metrics) {
-				m.storage.EXPECT().UpdateGauge(args.ID, *args.Value).Return(float64(0), errors.New("error update gauge value"))
+				m.storage.EXPECT().UpdateGauge(gomock.Any(), args.ID, *args.Value).Return(float64(0), errors.New("error update gauge value"))
 			},
 			expectedResponseBody: "{\"message\":\"Internal Server Error\"}",
 			expectedStatusCode:   http.StatusInternalServerError,
@@ -705,7 +705,7 @@ func TestUpdatesBatch(t *testing.T) {
 				{MType: "counter", ID: "PollCount1", Delta: utils.IntPtr(2)},
 			},
 			mockBehavior: func(m *mocks, args []models.Metrics) {
-				m.storage.EXPECT().BatchUpdate(args).Return(nil)
+				m.storage.EXPECT().BatchUpdate(gomock.Any(), args).Return(nil)
 			},
 			expectedResponseBody: strings.NewReplacer("\n", "", " ", "").
 				Replace(utils.GetDataFromFile("./mocks/responses/update_batch_ok.json").String()),
@@ -720,7 +720,7 @@ func TestUpdatesBatch(t *testing.T) {
 				{MType: "counter", ID: "PollCount1", Delta: utils.IntPtr(2)},
 			},
 			mockBehavior: func(m *mocks, args []models.Metrics) {
-				m.storage.EXPECT().BatchUpdate(args).Return(fmt.Errorf("error batch update"))
+				m.storage.EXPECT().BatchUpdate(gomock.Any(), args).Return(fmt.Errorf("error batch update"))
 			},
 			expectedResponseBody: "error batch update",
 			expectedStatusCode:   http.StatusInternalServerError,
@@ -799,7 +799,7 @@ func TestPing(t *testing.T) {
 		{
 			name: "PingSuccess",
 			mockBehavior: func(m *mocks) {
-				m.storage.EXPECT().Ping().Return(nil)
+				m.storage.EXPECT().Ping(gomock.Any()).Return(nil)
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedBody:       "Connection database is OK",
@@ -807,7 +807,7 @@ func TestPing(t *testing.T) {
 		{
 			name: "PingError",
 			mockBehavior: func(m *mocks) {
-				m.storage.EXPECT().Ping().Return(errors.New("error execute ping"))
+				m.storage.EXPECT().Ping(gomock.Any()).Return(errors.New("error execute ping"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedBody:       "Connection database is NOT ok",

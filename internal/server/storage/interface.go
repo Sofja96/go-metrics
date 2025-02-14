@@ -1,27 +1,29 @@
 package storage
 
 import (
+	"context"
+
 	"github.com/Sofja96/go-metrics.git/internal/models"
 )
 
 // Storage - интерфейс хранилища
 type Storage interface {
 	// UpdateCounter - обновляет метрику типа counter
-	UpdateCounter(name string, value int64) (int64, error)
+	UpdateCounter(ctx context.Context, name string, value int64) (int64, error)
 	// UpdateGauge - обновляет метрику типа gauge
-	UpdateGauge(name string, value float64) (float64, error)
+	UpdateGauge(ctx context.Context, name string, value float64) (float64, error)
 	// GetCounterValue - получает метрику типа counter
-	GetCounterValue(id string) (int64, bool)
+	GetCounterValue(ctx context.Context, id string) (int64, bool)
 	// GetGaugeValue - получает метрику типа gauge
-	GetGaugeValue(id string) (float64, bool)
+	GetGaugeValue(ctx context.Context, id string) (float64, bool)
 	// Ping - проверяет доступность хринилища
-	Ping() error
+	Ping(context.Context) error
 	// GetAllGauges - получает все метрики типа gauges
-	GetAllGauges() ([]GaugeMetric, error)
+	GetAllGauges(context.Context) ([]GaugeMetric, error)
 	// GetAllCounters - получает все метрики типа counter
-	GetAllCounters() ([]CounterMetric, error)
+	GetAllCounters(context.Context) ([]CounterMetric, error)
 	// BatchUpdate - обновляет метрики пачкой
-	BatchUpdate(metrics []models.Metrics) error
+	BatchUpdate(ctx context.Context, metrics []models.Metrics) error
 }
 
 // CounterMetric - структура метрик counter, содержащая имя и значение

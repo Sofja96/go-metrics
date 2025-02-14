@@ -92,7 +92,7 @@ func TestUpdateGauge(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			returnedValue, err := pg.UpdateGauge(tt.args.name, tt.args.value)
+			returnedValue, err := pg.UpdateGauge(context.Background(), tt.args.name, tt.args.value)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -176,7 +176,7 @@ func TestUpdateCounter(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			returnedValue, err := pg.UpdateCounter(tt.args.name, tt.args.value)
+			returnedValue, err := pg.UpdateCounter(context.Background(), tt.args.name, tt.args.value)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -259,7 +259,7 @@ func TestGetGaugeValue(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			returnedValue, exists := pg.GetGaugeValue(tt.args.id)
+			returnedValue, exists := pg.GetGaugeValue(context.Background(), tt.args.id)
 
 			if tt.exists {
 				assert.True(t, exists, "Gauge should exists")
@@ -349,7 +349,7 @@ func TestGetCounterValue(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			returnedValue, exists := pg.GetCounterValue(tt.args.id)
+			returnedValue, exists := pg.GetCounterValue(context.Background(), tt.args.id)
 
 			if tt.exists {
 				assert.True(t, exists, "Gauge should exists")
@@ -446,6 +446,28 @@ func TestGetAllGauges(t *testing.T) {
 			expectedGauges: nil,
 			wantErr:        true,
 		},
+		{
+			name: "Error updating gauge",
+			mockBehavior: func(m *mocks, args args) {
+				rows := sqlmock.NewRows([]string{"name", "value"}).
+					AddRow(args.name1, args.value1).
+					AddRow(args.name2, args.value2)
+				expectedExec := `SELECT name, value FROM gauge_metrics`
+				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).WillReturnRows(rows)
+
+				expectedInsert := `INSERT INTO 
+    							gauge_metrics(name, value) 
+								VALUES ($1, $2) ON CONFLICT (name)
+								 DO UPDATE SET value = $2
+								`
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).WithArgs(args.name1, args.value1).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).WithArgs(args.name2, args.value2).
+					WillReturnError(fmt.Errorf("error updating gauge"))
+			},
+			expectedGauges: nil,
+			wantErr:        true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -459,7 +481,7 @@ func TestGetAllGauges(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			gauges, err := pg.GetAllGauges()
+			gauges, err := pg.GetAllGauges(context.Background())
 
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error but got nil")
@@ -546,6 +568,27 @@ func TestGetAllCounters(t *testing.T) {
 			expectedCounters: nil,
 			wantErr:          true,
 		},
+		{
+			name: "Error updating counters",
+			mockBehavior: func(m *mocks, args args) {
+				rows := sqlmock.NewRows([]string{"name", "value"}).
+					AddRow(args.name1, args.value1).
+					AddRow(args.name2, args.value2)
+				expectedExec := `SELECT name, value FROM counter_metrics`
+				mock.ExpectQuery(regexp.QuoteMeta(expectedExec)).WillReturnRows(rows)
+
+				expectedInsert := `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) 
+								ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value 
+								    + $2 RETURNING value
+								`
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).WithArgs(args.name1, args.value1).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).WithArgs(args.name2, args.value2).
+					WillReturnError(fmt.Errorf("error updating counters"))
+			},
+			expectedCounters: nil,
+			wantErr:          true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -559,7 +602,7 @@ func TestGetAllCounters(t *testing.T) {
 			pg := &Postgres{DB: m.DB}
 
 			tt.mockBehavior(m, tt.args)
-			counters, err := pg.GetAllCounters()
+			counters, err := pg.GetAllCounters(context.Background())
 
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error but got nil")
@@ -663,7 +706,7 @@ func TestBatchUpdate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "SQL execution error",
+			name: "SQL execution error on gauge",
 			args: args{
 				name1:        "cpu_usage",
 				value1:       75.5,
@@ -680,9 +723,114 @@ func TestBatchUpdate(t *testing.T) {
                            DO UPDATE SET value = $2`
 				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).
 					WithArgs(args.name1, args.value1).
-					WillReturnError(fmt.Errorf("insert error"))
+					WillReturnError(fmt.Errorf("insert error gauge"))
 
 				mock.ExpectRollback()
+			},
+			metrics: []models.Metrics{
+				{ID: "cpu_usage", MType: "gauge", Value: ptrToFloat64(75.5)},
+				{ID: "memory_usage", MType: "gauge", Value: ptrToFloat64(60.0)},
+				{ID: "counter1", MType: "counter", Delta: ptrToInt64(10)},
+			},
+			wantErr: true,
+		},
+		{
+			name: "SQL execution error on counter",
+			args: args{
+				name1:        "cpu_usage",
+				value1:       75.5,
+				name2:        "memory_usage",
+				value2:       60.0,
+				nameCounter:  "counter1",
+				valueCounter: 10,
+			},
+			mockBehavior: func(m *mocks, args args) {
+				mock.ExpectBegin()
+				expectedInsert := ` INSERT INTO
+										gauge_metrics(name, value)
+										VALUES ($1, $2) ON CONFLICT (name)
+										DO UPDATE SET value = $2
+										`
+				expectedInsertCounter := `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) 
+								ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value 
+								    + $2 RETURNING value
+								`
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).
+					WithArgs(args.name1, args.value1).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).
+					WithArgs(args.name2, args.value2).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				mock.ExpectQuery(regexp.QuoteMeta(expectedInsertCounter)).
+					WithArgs(args.nameCounter, args.valueCounter).
+					WillReturnError(fmt.Errorf("insert error counter"))
+				mock.ExpectRollback()
+			},
+			metrics: []models.Metrics{
+				{ID: "cpu_usage", MType: "gauge", Value: ptrToFloat64(75.5)},
+				{ID: "memory_usage", MType: "gauge", Value: ptrToFloat64(60.0)},
+				{ID: "counter1", MType: "counter", Delta: ptrToInt64(10)},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty list metrics",
+			mockBehavior: func(m *mocks, args args) {
+				mock.ExpectBegin()
+			},
+			metrics: []models.Metrics{},
+			wantErr: true,
+		},
+		{
+			name: "unsupported metrics type",
+			mockBehavior: func(m *mocks, args args) {
+				mock.ExpectBegin()
+			},
+			metrics: []models.Metrics{
+				{
+					ID:    "unsupported_metric",
+					MType: "unsupported",
+					Value: ptrToFloat64(75.5)},
+			},
+			wantErr: true,
+		},
+		{
+			name: "failed to commit transaction",
+			args: args{
+				name1:        "cpu_usage",
+				value1:       75.5,
+				name2:        "memory_usage",
+				value2:       60.0,
+				nameCounter:  "counter1",
+				valueCounter: 10,
+			},
+			mockBehavior: func(m *mocks, args args) {
+				mock.ExpectBegin()
+				expectedInsert := ` INSERT INTO
+										gauge_metrics(name, value)
+										VALUES ($1, $2) ON CONFLICT (name)
+										DO UPDATE SET value = $2
+										`
+				expectedInsertCounter := `INSERT INTO counter_metrics(name, value)VALUES ($1, $2) 
+								ON CONFLICT(name)DO UPDATE SET value = counter_metrics.value 
+								    + $2 RETURNING value
+								`
+
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).
+					WithArgs(args.name1, args.value1).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(regexp.QuoteMeta(expectedInsert)).
+					WithArgs(args.name2, args.value2).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+
+				rowsInsertCounter := sqlmock.NewRows([]string{"value"}).
+					AddRow(10)
+				mock.ExpectQuery(regexp.QuoteMeta(expectedInsertCounter)).
+					WithArgs(args.nameCounter, args.valueCounter).
+					WillReturnRows(rowsInsertCounter)
+
+				mock.ExpectCommit().WillReturnError(fmt.Errorf("failed to commit transaction"))
 			},
 			metrics: []models.Metrics{
 				{ID: "cpu_usage", MType: "gauge", Value: ptrToFloat64(75.5)},
@@ -705,7 +853,7 @@ func TestBatchUpdate(t *testing.T) {
 
 			tt.mockBehavior(m, tt.args)
 
-			err := pg.BatchUpdate(tt.metrics)
+			err := pg.BatchUpdate(context.Background(), tt.metrics)
 
 			if tt.wantErr {
 				assert.Error(t, err, "Expected an error but got nil")
@@ -751,7 +899,7 @@ func TestPing(t *testing.T) {
 
 			pg := &Postgres{DB: sqlx.NewDb(db, "sqlmock")}
 
-			err := pg.Ping()
+			err := pg.Ping(context.Background())
 
 			if tt.wantErr {
 				assert.Error(t, err, "expected an error but got nil")
@@ -765,7 +913,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestInitDB(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	if err != nil {
 		t.Fatalf("failed to open mock database: %v", err)
 	}
@@ -788,6 +936,13 @@ func TestInitDB(t *testing.T) {
 				mock.ExpectExec(regexp.QuoteMeta(expectedExecGauge)).WillReturnResult(sqlmock.NewResult(0, 0))
 			},
 			wantErr: false,
+		},
+		{
+			name: "error pings",
+			mockBehavior: func(mock sqlmock.Sqlmock) {
+				mock.ExpectPing().WillReturnError(fmt.Errorf("unable to connect to database"))
+			},
+			wantErr: true,
 		},
 		{
 			name: "error creating counter_metrics table",

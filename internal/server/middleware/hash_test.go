@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/Sofja96/go-metrics.git/internal/utils"
 )
 
 func TestHashMacMiddleware(t *testing.T) {
@@ -21,7 +23,7 @@ func TestHashMacMiddleware(t *testing.T) {
 
 	t.Run("valid hash", func(t *testing.T) {
 		body := []byte("test body")
-		hash := ComputeHmac256(key, body)
+		hash := utils.ComputeHmac256(key, body)
 
 		req := httptest.NewRequest(http.MethodPost, "/test", bytes.NewReader(body))
 		req.Header.Set("Hashsha256", hash)

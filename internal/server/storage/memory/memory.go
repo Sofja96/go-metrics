@@ -56,7 +56,7 @@ func Dump(ctx context.Context, s *MemStorage, filePath string, storeInterval int
 }
 
 // LoadStorageFromFile - загружает данные из файла в формате JSON.
-func LoadStorageFromFile(s *MemStorage, filePath string) error {
+func LoadStorageFromFile(ctx context.Context, s *MemStorage, filePath string) error {
 	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("error read and load data from file: %w", err)
@@ -68,10 +68,10 @@ func LoadStorageFromFile(s *MemStorage, filePath string) error {
 	}
 
 	if len(data.Counter) != 0 {
-		s.UpdateCounterData(data.Counter)
+		s.UpdateCounterData(ctx, data.Counter)
 	}
 	if len(data.Gauge) != 0 {
-		s.UpdateGaugeData(data.Gauge)
+		s.UpdateGaugeData(ctx, data.Gauge)
 	}
 	return err
 }

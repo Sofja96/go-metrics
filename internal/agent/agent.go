@@ -65,6 +65,18 @@ func Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	var grpcClient *export.GRPCClient
+
+	if cfg.UseGRPC {
+		grpcClient, err = export.NewGRPCClient(cfg.GrpcAddress)
+		if err != nil {
+			log.Printf("failed to create gRPC client: %v", err)
+			cfg.UseGRPC = false
+			return fmt.Errorf("failed to create gRPC client: %w", err)
+		}
+		defer grpcClient.Close()
+	}
+
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
@@ -90,7 +102,6 @@ func Run() error {
 	}()
 	for i := 0; i < cfg.RateLimit; i++ {
 		wg.Add(1)
-		workerID := i
 		go func(workerId int) {
 			defer wg.Done()
 			log.Println("Отправка метрик.")
@@ -100,11 +111,11 @@ func Run() error {
 					log.Println("Отправка метрик остановлена по отмене контекста.")
 					return
 				case <-reportTicker.C:
-					log.Println("workerID", workerID, "started")
-					export.PostQueries(ctx, cfg, chMetrics, publicKey)
+					log.Println("workerID", workerId, "started")
+					export.PostQueries(ctx, cfg, chMetrics, publicKey, grpcClient)
 				}
 			}
-		}(workerID)
+		}(i)
 	}
 	wg.Add(1)
 	go func() {
